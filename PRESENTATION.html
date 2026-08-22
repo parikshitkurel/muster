@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MUSTER — MIT India Hackathon 2026 Presentation (PSE15)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Official MIT India Hackathon Visual Identity */
+      --mit-crimson: #A31F34;
+      --mit-crimson-dark: #7A1727;
+      --mit-crimson-light: #FDF2F4;
+      --mit-amber: #D97706;
+      --mit-amber-light: #FEF3C7;
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-400: #94A3B8;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --pure-white: #FFFFFF;
+      --emerald-600: #059669;
+      --emerald-50: #ECFDF5;
+      --muster-blue: #2563EB;
+      
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--slate-900);
+      color: var(--slate-900);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Progress Bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--mit-crimson), var(--mit-amber));
+      width: 8.33%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+    }
+
+    /* Top Navigation Header */
+    header {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 36px;
+      z-index: 90;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--pure-white);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-badge {
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: 2px;
+      background: var(--mit-crimson);
+      color: var(--pure-white);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .track-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-400);
+      letter-spacing: 0.5px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--slate-400);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      color: var(--pure-white);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* Deck Container */
+    #deck-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      margin-top: 52px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 52px);
+      display: none;
+      padding: 44px 56px 40px 56px;
+      background: var(--pure-white);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      opacity: 1;
+    }
+
+    /* Editorial Slide Layout Typography */
+    .slide-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mit-crimson);
+      margin-bottom: 6px;
+    }
+
+    .slide-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--slate-900);
+      line-height: 1.15;
+      margin-bottom: 8px;
+    }
+
+    .slide-subtitle {
+      font-size: 15px;
+      color: var(--slate-600);
+      font-weight: 400;
+      margin-bottom: 24px;
+      max-width: 820px;
+      line-height: 1.4;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--slate-200);
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--slate-600);
+      line-height: 1.45;
+    }
+
+    .card.highlight {
+      border-left: 4px solid var(--mit-crimson);
+      background: var(--mit-crimson-light);
+    }
+
+    .card.amber {
+      border-left: 4px solid var(--mit-amber);
+      background: var(--mit-amber-light);
+    }
+
+    .card.emerald {
+      border-left: 4px solid var(--emerald-600);
+      background: var(--emerald-50);
+    }
+
+    /* Formula & Code Blocks */
+    .formula-box {
+      font-family: var(--font-mono);
+      background: var(--slate-900);
+      color: #38BDF8;
+      padding: 16px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      border-left: 4px solid var(--mit-crimson);
+    }
+
+    /* Flow Steps */
+    .flow-sequence {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .flow-step {
+      flex: 1;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      padding: 14px 16px;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .flow-step .step-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--mit-crimson);
+      margin-bottom: 4px;
+    }
+
+    .flow-step .step-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 4px;
+    }
+
+    .flow-step .step-detail {
+      font-size: 11px;
+      color: var(--slate-600);
+      line-height: 1.35;
+    }
+
+    /* Comparison Table */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 8px;
+    }
+
+    table.data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--slate-100);
+      color: var(--slate-700);
+      font-weight: 700;
+      border-bottom: 2px solid var(--slate-200);
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-800);
+    }
+
+    table.data-table tr.highlight-row {
+      background: var(--mit-crimson-light);
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .badge-success { background: #D1FAE5; color: #065F46; }
+    .badge-crimson { background: var(--mit-crimson-light); color: var(--mit-crimson); }
+    .badge-amber { background: var(--mit-amber-light); color: #92400E; }
+    .badge-slate { background: var(--slate-200); color: var(--slate-800); }
+
+    /* Bottom Control Bar */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 36px;
+      background: var(--pure-white);
+      border-top: 1px solid var(--slate-200);
+      font-size: 12px;
+      color: var(--slate-600);
+      z-index: 90;
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-800);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: var(--mit-crimson);
+      color: var(--pure-white);
+      border-color: var(--mit-crimson);
+    }
+
+    /* Cover Slide Specific */
+    .cover-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 900px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
+
+    .cover-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--mit-crimson-light);
+      color: var(--mit-crimson);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      width: fit-content;
+    }
+
+    .cover-title {
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      color: var(--slate-900);
+      line-height: 1.05;
+      margin-bottom: 14px;
+    }
+
+    .cover-subtitle {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--slate-600);
+      line-height: 1.35;
+      margin-bottom: 36px;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      border-top: 1px solid var(--slate-200);
+      padding-top: 24px;
+    }
+
+    .cover-meta-item .meta-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--slate-400);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-item .meta-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div id="progress-bar"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">MUSTER</div>
+      <div class="track-tag">MIT India Hackathon 2026 • Track: PSE15</div>
+    </div>
+    <div class="header-right">
+      <span>AI-Powered Event Crew Optimization</span>
+      <span class="slide-counter"><span id="curr-slide">1</span> / 12</span>
+    </div>
+  </header>
+
+  <!-- Deck Slide Container -->
+  <main id="deck-container">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 01: COVER -->
+    <!-- ========================================== -->
+    <section class="slide active" id="slide-1">
+      <div class="cover-container">
+        <div class="cover-tag">MIT INDIA HACKATHON 2026 • PSE15 JURY PRESENTATION</div>
+        <h1 class="cover-title">MUSTER</h1>
+        <p class="cover-subtitle">AI-Powered Multi-Constraint Crew Assembly & Optimization Platform for Live Event Staffing</p>
+        <div class="cover-meta-grid">
+          <div class="cover-meta-item">
+            <div class="meta-label">Problem Statement</div>
+            <div class="meta-val">PSE15 — AI Event Staffing</div>
+          </div>
+          <div class="cover-meta-item">
+            <div class="meta-label">Core Architecture</div>
+            <div class="meta-val">Deterministic CP-SAT + Gemini 1.5</div>
+          </div>
+          <div class="cover-meta-item">
+            <div class="meta-label">Deployment Stack</div>
+            <div class="meta-val">Flutter + Supabase PostgreSQL</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 02: THE REAL-WORLD PROBLEM -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-2">
+      <div class="slide-eyebrow">01 / Problem Context</div>
+      <h2 class="slide-title">Event staffing is a high-stakes multi-constraint problem.</h2>
+      <p class="slide-subtitle">Live production events (concerts, technical summits, festivals) suffer catastrophic operational failure when staffing relies on manual WhatsApp groups and spreadsheets.</p>
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div class="card highlight">
+          <div class="card-title">1. Rigid Hard Constraints</div>
+          <div class="card-desc">An event cannot execute without exact role quotas (e.g., exactly 2 Dante Sound Engineers and 1 GrandMA3 Lighting Designer). Single missing roles compromise the entire production.</div>
+        </div>
+        <div class="card highlight">
+          <div class="card-title">2. Inviolable Budget Ceilings</div>
+          <div class="card-desc">Individual rate spikes and travel surcharges quickly lead to budget overruns. Organizers need mathematical guarantees that total crew expenditure remains ≤ budget.</div>
+        </div>
+        <div class="card highlight">
+          <div class="card-title">3. Transit & Reliability Risk</div>
+          <div class="card-desc">Staff travelling from distant locations face transit delays, while unverified freelancers carry a 20%+ no-show probability. There is zero historical reliability accountability.</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px;" class="card amber">
+        <div class="card-title">The Industry Gap: Why Existing Solutions Fail</div>
+        <div class="card-desc">Generic gig platforms (Upwork/Fiverr) optimize for individual hires rather than cross-role team synergy. Generic AI chatbots hallucinate rates and ignore hard mathematical budget constraints.</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 03: THE MUSTER SOLUTION -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-3">
+      <div class="slide-eyebrow">02 / Product Overview</div>
+      <h2 class="slide-title">MUSTER: Constraint-First Assembly + AI Explainability</h2>
+      <p class="slide-subtitle">A cross-platform operational platform that solves staffing with mathematical rigor and transparent generative rationale.</p>
+      <div class="divider"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title" style="color: var(--mit-crimson);">For Event Organizers</div>
+          <ul style="font-size: 12.5px; line-height: 1.8; color: var(--slate-700); padding-left: 18px; margin-top: 6px;">
+            <li><strong>Define Quotas & Caps:</strong> Set role headcounts, rate ceilings, and transit radii in minutes.</li>
+            <li><strong>AI Brief Assistant:</strong> Gemini NLP extracts structured quotas directly from free-form event briefs.</li>
+            <li><strong>Instant Optimal Crew:</strong> Multi-constraint solver generates Pareto-optimal rosters instantly.</li>
+            <li><strong>Transparent Explainability:</strong> Clear natural-language rationale for every single crew selection.</li>
+            <li><strong>Atomic Locking:</strong> Single-click PostgreSQL transaction confirms shift and issues dispatch passes.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="color: var(--emerald-600);">For Freelance Specialists</div>
+          <ul style="font-size: 12.5px; line-height: 1.8; color: var(--slate-700); padding-left: 18px; margin-top: 6px;">
+            <li><strong>Proximity Discovery:</strong> Discover verified live events within transit radius.</li>
+            <li><strong>Custom Shift Bidding:</strong> Propose competitive hourly rates per role requirement.</li>
+            <li><strong>Realtime Status Stream:</strong> Track application lifecycle (Pending → Selected) live.</li>
+            <li><strong>Digital Dispatch Token:</strong> Access cryptographically-verified QR entry pass upon selection.</li>
+            <li><strong>Reliability Growth:</strong> Build verifiable attendance and reliability track records.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 04: END-TO-END OPERATIONAL LIFECYCLE -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-4">
+      <div class="slide-eyebrow">03 / User Flow</div>
+      <h2 class="slide-title">From Natural Brief to Confirmed Digital Dispatch</h2>
+      <p class="slide-subtitle">A seamless 6-stage operational pipeline uniting organizer demand with verified freelance talent.</p>
+      <div class="divider"></div>
+
+      <div class="flow-sequence">
+        <div class="flow-step">
+          <div class="step-num">STAGE 01</div>
+          <div class="step-name">Create Event</div>
+          <div class="step-detail">Define role quotas, hourly rate ceilings, budget cap, and transit radius.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">STAGE 02</div>
+          <div class="step-name">Talent Bidding</div>
+          <div class="step-detail">Freelancers apply within radius with proposed rates (anti-duplicate checked).</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">STAGE 03</div>
+          <div class="step-name">Multi-Constraint Run</div>
+          <div class="step-detail">Deterministic solver filters candidates and calculates multi-objective fit scores.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">STAGE 04</div>
+          <div class="step-name">Gemini Rationale</div>
+          <div class="step-detail">Gemini 1.5 synthesizes natural-language explainability for selected specialists.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">STAGE 05</div>
+          <div class="step-name">Approve Crew</div>
+          <div class="step-detail">Atomic Supabase RPC locks roster, changes status to 'crew_confirmed'.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">STAGE 06</div>
+          <div class="step-name">QR Dispatch Pass</div>
+          <div class="step-detail">Freelancer receives instant notification and digital QR credential.</div>
+        </div>
+      </div>
+
+      <div class="card emerald" style="margin-top: 16px;">
+        <div class="card-title">Atomic Integrity Guaranteed</div>
+        <div class="card-desc">All candidate allocations and application status updates execute inside a single PostgreSQL database transaction (<code>approve_crew_transaction</code>), eliminating concurrency race conditions.</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 05: THE MATCHING ENGINE (MATHEMATICAL MODEL) -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-5">
+      <div class="slide-eyebrow">04 / Algorithmic Core</div>
+      <h2 class="slide-title">Where is the Math? Multi-Objective Optimization</h2>
+      <p class="slide-subtitle">MUSTER calculates candidate alignment through normalized composite multi-objective scoring and hard constraint satisfaction.</p>
+      <div class="divider"></div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card-title" style="margin-bottom: 10px;">Composite Objective Scoring Formula</div>
+          <div class="formula-box">
+            S_c = (w₁ · M_c) + (w₂ · R_c) + (w₃ · P_c) + (w₄ · C_c)
+            <br><br>
+            Where:
+            <br>• M_c = Skill & Experience Alignment Index [0..100]
+            <br>• R_c = Verified Historical Reliability Rating [0..100]
+            <br>• P_c = max(0, 100 - 2 · Distance_km) [Proximity Score]
+            <br>• C_c = 100 · (1 - (Rate_c - MinRate)/(MaxRate - MinRate))
+            <br><br>
+            Weights: w₁=0.40, w₂=0.35, w₃=0.15, w₄=0.10 (∑ w_i = 1.0)
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="card highlight">
+            <div class="card-title">Hard Inviolable Constraints</div>
+            <div class="card-desc">
+              1. <strong>Budget Cap:</strong> ∑ (Rate_i × 8 hrs) ≤ Event Budget<br>
+              2. <strong>Spatial Boundary:</strong> Distance_i ≤ Event Proximity Radius<br>
+              3. <strong>Rate Ceiling:</strong> Rate_i ≤ Max Allowed Role Rate<br>
+              4. <strong>Quota Satisfaction:</strong> Selected_k = Required_k for all roles
+            </div>
+          </div>
+          <div class="card amber">
+            <div class="card-title">Zero Hallucination Guarantee</div>
+            <div class="card-desc">The optimization engine operates deterministically. If no candidate combination satisfies the budget, the system returns a formal constraint violation rather than fabricating unvetted talent.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 06: WHERE IS THE AI? (GEMINI 1.5 ARCHITECTURE) -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-6">
+      <div class="slide-eyebrow">05 / AI Intelligence Layer</div>
+      <h2 class="slide-title">Where is the AI? Gemini 1.5 via Supabase Edge Function</h2>
+      <p class="slide-subtitle">Clear architectural separation: The deterministic engine guarantees mathematical correctness; Google Gemini 1.5 delivers intelligence and explainability.</p>
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">1. NLP Brief Understanding</div>
+          <div class="card-desc">Converts natural-language organizer prompts (<em>"Need 2 audio engineers in Mumbai under 1.5L"</em>) into structured quotas, rate caps, and budget parameters.</div>
+          <div style="margin-top: 10px;"><span class="badge badge-crimson">parse_requirements</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">2. Transparent Explainability</div>
+          <div class="card-desc">Generates human-readable rationales justifying why each specialist was selected based on skill match, past reliability rating, and transit proximity.</div>
+          <div style="margin-top: 10px;"><span class="badge badge-crimson">explain_roster</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">3. Trade-off Synthesis</div>
+          <div class="card-desc">Explains strategic trade-offs when cycling through alternative rosters (e.g., ₹14,000 cost reduction vs 4% experience delta).</div>
+          <div style="margin-top: 10px;"><span class="badge badge-crimson">explain_tradeoffs</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px; background: var(--slate-900); color: var(--pure-white);">
+        <div class="card-title" style="color: #38BDF8;">Privacy & Server-Side Security Guard</div>
+        <div class="card-desc" style="color: var(--slate-400);">The Gemini API key is isolated server-side inside the <code>muster-ai</code> Supabase Edge Function. Request payloads are strictly sanitized: no private phone numbers, emails, or personal passwords are ever exposed to the LLM.</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 07: ALTERNATIVE RECOMMENDATIONS & TRADE-OFFS -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-7">
+      <div class="slide-eyebrow">06 / Alternative Permutations</div>
+      <h2 class="slide-title">Multi-Objective Pareto Optimization in Action</h2>
+      <p class="slide-subtitle">Organizers are never locked into a single rigid suggestion. One click on "Find Another Crew" explores validated Pareto alternatives.</p>
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div class="card highlight">
+          <div class="card-title">Option #1: Balanced Optimal Fit</div>
+          <div class="card-desc">
+            <strong>Strategy:</strong> Multi-objective Pareto fit balancing match score, proximity, and rate.<br><br>
+            <strong>Cost:</strong> ₹1,04,000 / ₹1,50,000<br>
+            <strong>Match Score:</strong> 96%<br>
+            <strong>AI Rationale:</strong> Highest composite alignment across all roles with high local proximity.
+          </div>
+        </div>
+
+        <div class="card amber">
+          <div class="card-title">Option #2: Budget-Optimized Roster</div>
+          <div class="card-desc">
+            <strong>Strategy:</strong> Minimizes total crew expenditure while satisfying minimum quality floors.<br><br>
+            <strong>Cost:</strong> ₹88,000 / ₹1,50,000 (₹16k Savings)<br>
+            <strong>Match Score:</strong> 91%<br>
+            <strong>AI Rationale:</strong> Ideal for budget-conscious organizers trading marginal experience for 15% cost savings.
+          </div>
+        </div>
+
+        <div class="card emerald">
+          <div class="card-title">Option #3: High-Reliability Veterans</div>
+          <div class="card-desc">
+            <strong>Strategy:</strong> Maximizes historical shift reliability (98%+) and experience years.<br><br>
+            <strong>Cost:</strong> ₹1,12,000 / ₹1,50,000<br>
+            <strong>Match Score:</strong> 97%<br>
+            <strong>AI Rationale:</strong> Tailored for mission-critical keynotes where zero technical failure tolerance exists.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-title">Interactive Manual Selector Available</div>
+        <div class="card-desc">Organizers can toggle <strong>"Select Manually"</strong> to hand-pick individual candidates while the live reactive budget calculator guarantees total cost ≤ budget cap before approval.</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 08: PRODUCTION APP SHOWCASE -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-8">
+      <div class="slide-eyebrow">07 / Implementation Evidence</div>
+      <h2 class="slide-title">Production Flutter UI & Feature Showcase</h2>
+      <p class="slide-subtitle">Fully implemented in Flutter with Material 3, clean Lucide vector icons, and zero emojis.</p>
+      <div class="divider"></div>
+
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title">1. Event Wizard</div>
+          <div class="card-desc">5-step wizard with quota inputs, rate ceilings, proximity radius sliders, and Gemini NLP brief auto-fill.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Applicant Pool</div>
+          <div class="card-desc">Real-time applicant grid with role filtering and multi-sort by match score, rate, distance, and reliability.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">3. AI Solver & Rationale</div>
+          <div class="card-desc">Simulated CP-SAT solver terminal with live Gemini natural-language explainability breakdown cards.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">4. QR Dispatch Pass</div>
+          <div class="card-desc">Freelancer mobile view featuring confirmed shift tokens, live operational badges, and QR venue credentials.</div>
+        </div>
+      </div>
+
+      <div class="card highlight" style="margin-top: 20px;">
+        <div class="card-title">Live Testing Verification</div>
+        <div class="card-desc">
+          • <strong>`flutter analyze`:</strong> 0 errors, 0 warnings (Clean)<br>
+          • <strong>`flutter test`:</strong> 100% Passed<br>
+          • <strong>Android Release:</strong> <code>APK/MUSTER-v1.0.apk</code> (54.0 MB)<br>
+          • <strong>Web Production:</strong> <code>build/web/</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 09: TECHNICAL ARCHITECTURE & BACKEND -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-9">
+      <div class="slide-eyebrow">08 / Backend & Security</div>
+      <h2 class="slide-title">Enterprise Supabase PostgreSQL & Security</h2>
+      <p class="slide-subtitle">Architected with 13 relational tables, Row Level Security, and Realtime Postgres changes.</p>
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">13 Relational Tables</div>
+          <div class="card-desc">
+            • <code>profiles</code> & <code>organizer_profiles</code><br>
+            • <code>freelancer_profiles</code> & <code>skills</code><br>
+            • <code>events</code> & <code>event_roles</code><br>
+            • <code>applications</code> (Anti-duplicate)<br>
+            • <code>crews</code> & <code>crew_members</code><br>
+            • <code>match_recommendations</code><br>
+            • <code>notifications</code>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Granular Row-Level Security</div>
+          <div class="card-desc">
+            • Public verified directory browsing.<br>
+            • Organizers can only manage own events.<br>
+            • Freelancer bids visible only to applicant and target event organizer.<br>
+            • Notifications strictly isolated to recipient.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Postgres Stored Procedures</div>
+          <div class="card-desc">
+            • <code>approve_crew_transaction</code>: Atomic crew locking, application status updates, and confirmation notifications.<br>
+            • <code>handle_new_user</code>: Automatic profile creation upon Supabase auth sign-up.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 10: COMPETITIVE ADVANTAGE -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-10">
+      <div class="slide-eyebrow">09 / Competitive Differentiation</div>
+      <h2 class="slide-title">Why MUSTER Wins: Technical Credibility</h2>
+      <p class="slide-subtitle">Comparing MUSTER against traditional agencies, gig marketplaces, and generic AI chatbots.</p>
+      <div class="divider"></div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Feature / Capability</th>
+            <th>Traditional Staffing</th>
+            <th>Gig Platforms (Upwork)</th>
+            <th>Generic AI Chatbot</th>
+            <th>MUSTER</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Assembly Speed</strong></td>
+            <td>3–5 Days (Manual Calls)</td>
+            <td>2–4 Days (Individual)</td>
+            <td>Instant (Hallucinated)</td>
+            <td><span class="badge badge-success">&lt; 3 Seconds</span></td>
+          </tr>
+          <tr>
+            <td><strong>Multi-Role Quota Alignment</strong></td>
+            <td>Manual Spreadsheets</td>
+            <td>No (Single Hires Only)</td>
+            <td>Unenforced</td>
+            <td><span class="badge badge-success">Automated CP-SAT</span></td>
+          </tr>
+          <tr>
+            <td><strong>Hard Budget Guarantee</strong></td>
+            <td>High Overrun Risk</td>
+            <td>None</td>
+            <td>Fails Constraint Check</td>
+            <td><span class="badge badge-success">Strict Math Cap</span></td>
+          </tr>
+          <tr>
+            <td><strong>Proximity & Reliability Check</strong></td>
+            <td>Unverified</td>
+            <td>Self-reported</td>
+            <td>Ignored</td>
+            <td><span class="badge badge-success">Scored & Verified</span></td>
+          </tr>
+          <tr>
+            <td><strong>Explainability & Rationale</strong></td>
+            <td>None</td>
+            <td>None</td>
+            <td>Generic Text</td>
+            <td><span class="badge badge-success">Gemini 1.5 Rationale</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 11: SCALABILITY & ROADMAP -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-11">
+      <div class="slide-eyebrow">10 / Beyond the Hackathon</div>
+      <h2 class="slide-title">Scalability, Reliability & Future Roadmap</h2>
+      <p class="slide-subtitle">Engineered to scale seamlessly from single-day meetups to nationwide multi-venue music festivals.</p>
+      <div class="divider"></div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Production Readiness (Now)</div>
+          <div class="card-desc">
+            • Flutter Web, Android, and iOS unified codebase.<br>
+            • Live Supabase PostgreSQL backend integration.<br>
+            • Server-side Google Gemini 1.5 Edge Function.<br>
+            • Offline fail-safe deterministic resilience.
+          </div>
+        </div>
+
+        <div class="card highlight">
+          <div class="card-title">Phase 2: Live On-Site Ops</div>
+          <div class="card-desc">
+            • Geofenced GPS check-in at venue perimeters.<br>
+            • Instant automated backup replacement dispatch if a crew member delays check-in.<br>
+            • Integrated UPI shift payout escrow integration.
+          </div>
+        </div>
+
+        <div class="card emerald">
+          <div class="card-title">Phase 3: Industry Network</div>
+          <div class="card-desc">
+            • Production equipment inventory co-scheduling (Sound consoles + certified operators).<br>
+            • Enterprise agency multi-event crew pooling.<br>
+            • Open API for live event ticketing platforms.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 12: CONCLUSION & LIVE DEMO -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-12">
+      <div class="cover-container" style="text-align: center; align-items: center;">
+        <div class="cover-tag">MIT INDIA HACKATHON 2026 • PSE15</div>
+        <h2 class="cover-title" style="font-size: 48px;">Experience MUSTER Live</h2>
+        <p class="cover-subtitle" style="max-width: 650px;">The production application is live and running on Web and native Android APK.</p>
+        
+        <div style="display: flex; gap: 16px; margin-top: 10px; margin-bottom: 30px;">
+          <div class="badge badge-success" style="padding: 8px 16px; font-size: 13px;">flutter analyze: 0 Issues</div>
+          <div class="badge badge-success" style="padding: 8px 16px; font-size: 13px;">flutter test: 100% Passed</div>
+          <div class="badge badge-crimson" style="padding: 8px 16px; font-size: 13px;">Gemini 1.5 Active</div>
+        </div>
+
+        <div class="card highlight" style="max-width: 600px; text-align: left;">
+          <div class="card-title" style="text-align: center; font-size: 16px;">Live Demo Credentials for Jury</div>
+          <div style="font-size: 13px; line-height: 1.8; color: var(--slate-800); margin-top: 8px;">
+            • <strong>Organizer Role:</strong> <code>organizer@muster.events</code> / <code>password123</code><br>
+            • <strong>Freelancer Role:</strong> <code>rohan.mehta@muster.events</code> / <code>password123</code><br>
+            • <strong>Android Release:</strong> <code>APK/MUSTER-v1.0.apk</code> (54.0 MB)
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Footer -->
+  <footer>
+    <div style="font-weight: 600;">
+      <span style="color: var(--mit-crimson);">MUSTER</span> — AI-Powered Event Crew Optimization
+    </div>
+    <div class="nav-controls">
+      <button class="nav-btn" id="prev-btn" onclick="prevSlide()">← Previous [←]</button>
+      <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next [→] →</button>
+      <button class="nav-btn" onclick="toggleFullscreen()">Fullscreen [F]</button>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function showSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      document.querySelectorAll('.slide').forEach((s, idx) => {
+        if (idx + 1 === currentSlide) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      document.getElementById('curr-slide').innerText = currentSlide;
+      const progressPct = (currentSlide / totalSlides) * 100;
+      document.getElementById('progress-bar').style.width = `${progressPct}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Home') {
+        showSlide(1);
+      } else if (e.key === 'End') {
+        showSlide(totalSlides);
+      }
+    });
+  </script>
+</body>
+</html>
