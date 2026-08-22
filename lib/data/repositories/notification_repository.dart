@@ -66,9 +66,15 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     }
   }
 
-  Future<void> fetchNotificationsFromSupabase() async {
+  Future<void> fetchNotificationsFromSupabase({String? userId}) async {
     final client = SupabaseConfig.client;
     if (client == null) {
+      state = state.copyWith(notifications: const [], isLoading: false);
+      return;
+    }
+
+    final targetUserId = userId ?? client.auth.currentUser?.id;
+    if (targetUserId == null || targetUserId.isEmpty) {
       state = state.copyWith(notifications: const [], isLoading: false);
       return;
     }
@@ -77,6 +83,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
       final notifsRes = await client
           .from('notifications')
           .select()
+          .eq('user_id', targetUserId)
           .order('created_at', ascending: false);
 
       final list = (notifsRes as List)

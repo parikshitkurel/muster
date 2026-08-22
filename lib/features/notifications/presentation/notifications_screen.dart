@@ -16,7 +16,11 @@ class NotificationsScreen extends ConsumerWidget {
     final notifState = ref.watch(notificationProvider);
     final authState = ref.watch(authProvider);
     final user = authState.currentUser;
-    final notifs = notifState.notifications;
+    final allNotifs = notifState.notifications;
+
+    final notifs = user != null
+        ? allNotifs.where((n) => n.userId == user.id || n.userId.isEmpty).toList()
+        : allNotifs;
 
     final isMobile = ResponsiveLayout.isMobile(context);
 
