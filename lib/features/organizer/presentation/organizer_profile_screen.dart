@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/supabase/supabase_config.dart';
+import '../../../models/user.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class OrganizerProfileScreen extends ConsumerStatefulWidget {
@@ -42,6 +44,34 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final supaUser = SupabaseConfig.client?.auth.currentUser;
+    final user = authState.currentUser ??
+        (supaUser != null
+            ? AppUser(
+                id: supaUser.id,
+                email: supaUser.email ?? 'organizer@muster.events',
+                fullName: 'Vikramaditya Roy',
+                role: UserRole.organizer,
+                companyName: 'Apex Event Production Pvt Ltd',
+                organizerCity: 'Bengaluru',
+                phone: '+91 98765 43210',
+              )
+            : AppUser(
+                id: '00000000-0000-0000-0000-000000000001',
+                email: 'organizer@muster.events',
+                fullName: 'Vikramaditya Roy',
+                role: UserRole.organizer,
+                companyName: 'Apex Event Production Pvt Ltd',
+                organizerCity: 'Bengaluru',
+                phone: '+91 98765 43210',
+              ));
+
+    if (_nameCtrl.text.isEmpty && user.fullName.isNotEmpty) _nameCtrl.text = user.fullName;
+    if (_companyCtrl.text.isEmpty && user.companyName.isNotEmpty) _companyCtrl.text = user.companyName;
+    if (_cityCtrl.text.isEmpty && user.organizerCity.isNotEmpty) _cityCtrl.text = user.organizerCity;
+    if (_phoneCtrl.text.isEmpty && (user.phone?.isNotEmpty ?? false)) _phoneCtrl.text = user.phone!;
+    if (_emailCtrl.text.isEmpty && user.email.isNotEmpty) _emailCtrl.text = user.email;
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       body: SingleChildScrollView(

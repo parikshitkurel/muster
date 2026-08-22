@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/supabase/supabase_config.dart';
+import '../../../models/user.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class FreelancerProfileScreen extends ConsumerStatefulWidget {
@@ -46,7 +48,37 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider).currentUser;
+    final authState = ref.watch(authProvider);
+    final supaUser = SupabaseConfig.client?.auth.currentUser;
+    final user = authState.currentUser ??
+        (supaUser != null
+            ? AppUser(
+                id: supaUser.id,
+                email: supaUser.email ?? 'rohan.mehta@muster.events',
+                fullName: 'Rohan Mehta',
+                role: UserRole.freelancer,
+                primaryRole: 'Sound Engineer',
+                expectedRate: 1800,
+                freelancerCity: 'Bengaluru',
+                phone: '+91 98765 43210',
+              )
+            : AppUser(
+                id: '00000000-0000-0000-0000-000000000002',
+                email: 'rohan.mehta@muster.events',
+                fullName: 'Rohan Mehta',
+                role: UserRole.freelancer,
+                primaryRole: 'Sound Engineer',
+                expectedRate: 1800,
+                freelancerCity: 'Bengaluru',
+                phone: '+91 98765 43210',
+              ));
+
+    if (_nameCtrl.text.isEmpty && user.fullName.isNotEmpty) _nameCtrl.text = user.fullName;
+    if (_roleCtrl.text.isEmpty && user.primaryRole.isNotEmpty) _roleCtrl.text = user.primaryRole;
+    if ((_rateCtrl.text.isEmpty || _rateCtrl.text == '0') && user.expectedRate > 0) _rateCtrl.text = '${user.expectedRate}';
+    if (_cityCtrl.text.isEmpty && user.freelancerCity.isNotEmpty) _cityCtrl.text = user.freelancerCity;
+    if (_phoneCtrl.text.isEmpty && (user.phone?.isNotEmpty ?? false)) _phoneCtrl.text = user.phone!;
+    if (_emailCtrl.text.isEmpty && user.email.isNotEmpty) _emailCtrl.text = user.email;
 
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
@@ -103,7 +135,7 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                                       const Icon(LucideIcons.shieldCheck, size: 11, color: AppColors.success),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '${user?.reliabilityScore ?? 0}% RELIABILITY RATING',
+                                        '${user.reliabilityScore}% RELIABILITY RATING',
                                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.success, fontFamily: 'monospace'),
                                       ),
                                     ],
@@ -176,7 +208,7 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                      children: (user?.skills ?? const [])
+                      children: user.skills
                           .map(
                               (s) => Chip(
                                 label: Text(s, style: const TextStyle(fontSize: 11)),
@@ -203,7 +235,7 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                                           hourlyRate: rate,
                                           city: _cityCtrl.text,
                                           phone: _phoneCtrl.text,
-                                          skills: user?.skills ?? const [],
+                                          skills: user.skills,
                                         );
                                     if (!context.mounted) return;
                                     setState(() => _isSaving = false);
