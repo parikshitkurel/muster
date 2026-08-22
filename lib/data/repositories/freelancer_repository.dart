@@ -86,16 +86,24 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
       try {
         candidatesRes = await client.from('freelancer_profiles').select('''
           *,
-          profiles!freelancer_profiles_id_fkey (full_name, email, phone, avatar_url),
-          freelancer_skills (skill_name)
+          profiles!id (full_name, email, phone, avatar_url),
+          freelancer_skills!freelancer_id (skill_name)
         ''');
-      } catch (ambiguousErr) {
-        debugPrint('[Supabase] Explicit FK join notice: $ambiguousErr. Trying standard fallback...');
-        candidatesRes = await client.from('freelancer_profiles').select('''
-          *,
-          profiles (full_name, email, phone, avatar_url),
-          freelancer_skills (skill_name)
-        ''');
+      } catch (fkeyErr) {
+        debugPrint('[Supabase] Primary FK join notice: $fkeyErr. Trying secondary FK syntax...');
+        try {
+          candidatesRes = await client.from('freelancer_profiles').select('''
+            *,
+            profiles!id (full_name, email, phone, avatar_url),
+            freelancer_skills!freelancer_skills_freelancer_id_fkey(*)
+          ''');
+        } catch (_) {
+          candidatesRes = await client.from('freelancer_profiles').select('''
+            *,
+            profiles!id (full_name, email, phone, avatar_url),
+            freelancer_skills (skill_name)
+          ''');
+        }
       }
 
       final List<FreelancerCandidate> list = [];
@@ -111,25 +119,29 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
     }
   }
 
-  Future<void> fetchApplicationsFromSupabase() async {
+  Future<void> fetchApplicationsFromSupabase({String? userId}) async {
     final client = SupabaseConfig.client;
     if (client == null) {
       state = state.copyWith(myApplications: const [], isLoading: false);
       return;
     }
 
+    final targetUserId = userId ?? client.auth.currentUser?.id;
+    if (targetUserId == null || targetUserId.isEmpty) {
+      // Unauthenticated or unknown freelancer: myApplications must be empty
+      state = state.copyWith(myApplications: const [], isLoading: false);
+      return;
+    }
+
     try {
-      final currentUser = client.auth.currentUser;
-      var query = client.from('applications').select('''
-        *,
-        events:event_id (name)
-      ''');
+      final appRes = await client
+          .from('applications')
+          .select('''
+            *,
+            events:event_id (name)
+          ''')
+          .eq('freelancer_id', targetUserId);
 
-      if (currentUser != null) {
-        query = query.eq('freelancer_id', currentUser.id);
-      }
-
-      final appRes = await query;
       final list = (appRes as List)
           .map((a) => FreelancerApplication.fromSupabase(a))
           .toList();

@@ -124,7 +124,7 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final evt = filtered[index];
-                      final alreadyApplied = myApps.any((a) => a.eventId == evt.id);
+                      final alreadyApplied = myApps.any((a) => a.eventId == evt.id && a.freelancerId == user.id);
 
                 return Card(
                   child: Padding(

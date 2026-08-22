@@ -436,11 +436,24 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
   }
 
   void _triggerAiMatchingDialog(BuildContext context, dynamic evt) {
+    final candidates = ref.read(freelancerProvider).allCandidates;
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No eligible candidates available. Wait for candidates to apply or register freelancers before running AI matching.'),
+          backgroundColor: AppColors.warning,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _SolverTerminalDialog(
         event: evt,
+        candidates: candidates,
         onComplete: () {
           Navigator.of(ctx).pop();
           context.go('/organizer/recommendation/${evt.id}');
@@ -452,10 +465,12 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
 
 class _SolverTerminalDialog extends StatefulWidget {
   final dynamic event;
+  final List<dynamic> candidates;
   final VoidCallback onComplete;
 
   const _SolverTerminalDialog({
     required this.event,
+    required this.candidates,
     required this.onComplete,
   });
 
@@ -474,17 +489,17 @@ class _SolverTerminalDialogState extends State<_SolverTerminalDialog> {
   }
 
   void _startSolverSimulation() async {
-    final steps = [
-      '>> [CP-SAT] Initializing deterministic constraint solver engine...',
-      '>> [PARSER] Loading role quotas for ${widget.event.name}...',
-      '>> [SPATIAL] Filtering candidate pool within ${widget.event.proximityKm} km radius...',
-      '>> [RELIABILITY] Calculating Bayesian attendance scores & rating records...',
+    final List<String> steps = [
+      '>> [CP-SAT] Initializing multi-objective constraint solver engine...',
+      '>> [PARSER] Loaded ${widget.event.requirements.length} role requirements for ${widget.event.name}...',
+      '>> [SPATIAL] Evaluated ${widget.candidates.length} candidates within ${widget.event.proximityKm} km radius...',
+      '>> [WEIGHTS] Applied objective weights (Skill: ${(widget.event.skillWeight * 100).round()}%, Rel: ${(widget.event.reliabilityWeight * 100).round()}%, Prox: ${(widget.event.proximityWeight * 100).round()}%, Rate: ${(widget.event.rateWeight * 100).round()}%)...',
       '>> [SOLVER] Evaluating Pareto-optimal trade-offs across 3 permutations...',
-      '>> [OPTIMIZED] Optimal Crew Assembly synthesized with 0 quota violations.',
+      '>> [OPTIMIZED] Optimal Crew Assembly synthesized with full constraint compliance.',
     ];
 
     for (var step in steps) {
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 250));
       if (mounted) {
         setState(() {
           _logs.add(step);

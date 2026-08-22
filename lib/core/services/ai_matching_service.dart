@@ -14,20 +14,43 @@ class AIMatchingService {
     final List<CrewMember> recommendedCrew = [];
     int totalCost = 0;
 
-    final candidatesByRole = <String, List<FreelancerCandidate>>{};
-    for (var cand in allCandidates) {
-      // Spatial & Rate Pre-filtering (Hard Constraints)
-      if (cand.distanceKm > event.proximityKm) continue;
-      candidatesByRole.putIfAbsent(cand.role, () => []).add(cand);
-    }
-
     for (var req in event.requirements) {
-      var pool = candidatesByRole[req.role] ?? [];
-      if (pool.isEmpty) continue;
+      // 1. Filter candidates by spatial radius
+      var pool = allCandidates.where((c) => c.distanceKm <= event.proximityKm).toList();
 
-      // Filter by rate ceiling (Hard Constraint)
-      var validPool = pool.where((c) => c.expectedRate <= req.maxRatePerHour).toList();
-      if (validPool.isEmpty) validPool = pool; // Graceful relaxation if strict ceiling is unpopulated
+      // 2. Filter candidates matching requirement role or skills
+      var rolePool = pool.where((c) {
+        final reqRoleLower = req.role.toLowerCase();
+        final candRoleLower = c.role.toLowerCase();
+        final matchesRole = candRoleLower == reqRoleLower ||
+            candRoleLower.contains(reqRoleLower) ||
+            reqRoleLower.contains(candRoleLower);
+        final matchesSkill = c.skills.any((s) => s.toLowerCase().contains(reqRoleLower) || reqRoleLower.contains(s.toLowerCase()));
+        return matchesRole || matchesSkill;
+      }).toList();
+
+      // Graceful relaxation to full candidate pool if strict role pool is empty
+      if (rolePool.isEmpty && pool.isNotEmpty) {
+        rolePool = List.from(pool);
+      }
+
+      if (rolePool.isEmpty) continue;
+
+      // 3. Filter by rate ceiling
+      var validPool = rolePool.where((c) => c.expectedRate <= req.maxRatePerHour).toList();
+      if (validPool.isEmpty) validPool = rolePool;
+
+      double calcCompositeScore(FreelancerCandidate c) {
+        final proxScore = event.proximityKm > 0
+            ? ((1.0 - (c.distanceKm / event.proximityKm)).clamp(0.0, 1.0) * 100)
+            : 100.0;
+        final maxRate = req.maxRatePerHour > 0 ? req.maxRatePerHour : 1500;
+        final rateScore = ((1.0 - (c.expectedRate / maxRate)).clamp(0.0, 1.0) * 100);
+        return (c.matchScore * event.skillWeight) +
+            (c.reliabilityScore * event.reliabilityWeight) +
+            (proxScore * event.proximityWeight) +
+            (rateScore * event.rateWeight);
+      }
 
       if (permutationIndex == 1) {
         // Option 2: Budget-Optimized (Sort by Cost ascending)
@@ -40,8 +63,8 @@ class AIMatchingService {
           return b.experienceYears.compareTo(a.experienceYears);
         });
       } else {
-        // Option 1: Balanced Pareto-Optimal Fit (Multi-objective score)
-        validPool.sort((a, b) => b.matchScore.compareTo(a.matchScore));
+        // Option 1: Multi-objective Pareto-Optimal Weighted Score
+        validPool.sort((a, b) => calcCompositeScore(b).compareTo(calcCompositeScore(a)));
       }
 
       int count = 0;
@@ -50,16 +73,18 @@ class AIMatchingService {
         if (recommendedCrew.any((m) => m.freelancerId == cand.id)) continue;
 
         int shiftCost = cand.expectedRate * 8;
+        int computedScore = calcCompositeScore(cand).round().clamp(0, 100);
+
         recommendedCrew.add(
           CrewMember(
             freelancerId: cand.id,
             fullName: cand.name,
             role: req.role,
-            matchScore: cand.matchScore,
+            matchScore: computedScore,
             reliabilityScore: cand.reliabilityScore,
             allocatedCost: shiftCost,
             rationale:
-                'Selected for ${req.role} with ${cand.experienceYears} yrs experience, ${cand.reliabilityScore}% reliability rating, and ${cand.distanceKm} km transit proximity.',
+                'Selected for ${req.role} with ${cand.experienceYears} yrs experience, ${cand.reliabilityScore}% reliability rating, ${cand.distanceKm} km proximity, and $computedScore% weighted match score.',
           ),
         );
         totalCost += shiftCost;
@@ -74,8 +99,7 @@ class AIMatchingService {
             .round();
 
     int budgetRem = event.budget - totalCost;
-    // Hard constraint verification: Budget must not be breached
-    bool isValid = budgetRem >= 0 && recommendedCrew.length >= event.totalCrewNeeded;
+    bool isValid = budgetRem >= 0 && recommendedCrew.length >= event.totalCrewNeeded && recommendedCrew.isNotEmpty;
 
     String optionTitle = 'Option #${permutationIndex + 1}: ';
     String strategyDesc = '';

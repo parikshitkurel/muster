@@ -137,7 +137,7 @@ class FreelancerDashboardScreen extends ConsumerWidget {
                             itemBuilder: (context, index) {
                               final evt = events[index];
                               final alreadyApplied =
-                                  applications.any((a) => a.eventId == evt.id);
+                                  applications.any((a) => a.eventId == evt.id && a.freelancerId == user.id);
 
                               return Container(
                                 padding: const EdgeInsets.all(14),

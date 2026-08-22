@@ -45,6 +45,15 @@ class _OrganizerRegistrationScreenState
 
       if (success && mounted) {
         context.go('/organizer/dashboard');
+      } else if (!success && mounted) {
+        final err = ref.read(authProvider).error ?? 'Registration failed. Please check details.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(err),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
   }

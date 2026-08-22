@@ -48,6 +48,10 @@ class EventItem {
   final String city;
   final int budget;
   final int proximityKm;
+  final double skillWeight;
+  final double reliabilityWeight;
+  final double proximityWeight;
+  final double rateWeight;
   final EventStatus status;
   final List<EventRequirement> requirements;
   final String description;
@@ -65,6 +69,10 @@ class EventItem {
     required this.city,
     required this.budget,
     required this.proximityKm,
+    this.skillWeight = 0.40,
+    this.reliabilityWeight = 0.35,
+    this.proximityWeight = 0.15,
+    this.rateWeight = 0.10,
     required this.status,
     required this.requirements,
     required this.description,
@@ -86,6 +94,10 @@ class EventItem {
     String? city,
     int? budget,
     int? proximityKm,
+    double? skillWeight,
+    double? reliabilityWeight,
+    double? proximityWeight,
+    double? rateWeight,
     EventStatus? status,
     List<EventRequirement>? requirements,
     String? description,
@@ -103,6 +115,10 @@ class EventItem {
       city: city ?? this.city,
       budget: budget ?? this.budget,
       proximityKm: proximityKm ?? this.proximityKm,
+      skillWeight: skillWeight ?? this.skillWeight,
+      reliabilityWeight: reliabilityWeight ?? this.reliabilityWeight,
+      proximityWeight: proximityWeight ?? this.proximityWeight,
+      rateWeight: rateWeight ?? this.rateWeight,
       status: status ?? this.status,
       requirements: requirements ?? this.requirements,
       description: description ?? this.description,
@@ -131,6 +147,10 @@ class EventItem {
       city: map['city'] as String? ?? 'Bengaluru',
       budget: (map['budget'] as num?)?.toInt() ?? 50000,
       proximityKm: (map['proximity_km'] as num?)?.toInt() ?? 25,
+      skillWeight: (map['skill_weight'] as num?)?.toDouble() ?? 0.40,
+      reliabilityWeight: (map['reliability_weight'] as num?)?.toDouble() ?? 0.35,
+      proximityWeight: (map['proximity_weight'] as num?)?.toDouble() ?? 0.15,
+      rateWeight: (map['rate_weight'] as num?)?.toDouble() ?? 0.10,
       status: status,
       requirements: reqs ?? const [],
       description: map['description'] as String? ?? '',
@@ -157,13 +177,13 @@ class EventItem {
       'city': city,
       'budget': budget,
       'proximity_km': proximityKm,
+      'skill_weight': skillWeight,
+      'reliability_weight': reliabilityWeight,
+      'proximity_weight': proximityWeight,
+      'rate_weight': rateWeight,
       'status': statusStr,
       'description': description,
     };
-
-    if (id.length == 36 && id.contains('-')) {
-      payload['id'] = id;
-    }
 
     return payload;
   }

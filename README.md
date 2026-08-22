@@ -122,11 +122,11 @@ flutter run -d android
 
 ## 🗄️ Database Setup (Supabase PostgreSQL)
 
-MUSTER includes a complete, all-in-one setup SQL script containing all 13 tables, custom enums, RLS policies, auto-profile triggers, RPC stored procedures, and seed data:
+MUSTER includes a master, all-in-one setup SQL script containing all 13 tables, custom enums, RLS policies, auto-profile triggers (`handle_new_user`), RPC stored procedures, matching weight columns, and crew migration parameters:
 
 1. Open your **[Supabase Dashboard](https://app.supabase.com)**.
 2. Go to **SQL Editor** -> **+ New Query**.
-3. Copy and paste the entire content from [`MUSTER_COMPLETE_SUPABASE_SETUP.sql`](MUSTER_COMPLETE_SUPABASE_SETUP.sql).
+3. Copy and paste the entire content from [`MUSTER_FINAL_DATABASE_SETUP_AND_RLS.sql`](MUSTER_FINAL_DATABASE_SETUP_AND_RLS.sql) (or [`MUSTER_COMPLETE_SUPABASE_SETUP.sql`](MUSTER_COMPLETE_SUPABASE_SETUP.sql)).
 4. Click **Run** (`Ctrl + Enter`).
 
 ---
@@ -151,12 +151,12 @@ Follow this 2-minute flow during judging evaluation:
 
 1. **Sign In**: Login as Organizer (`organizer@muster.events` / `password123`) or click **Demo Organizer Login**.
 2. **Dashboard**: Inspect real-time operational metrics and active event cards.
-3. **Create Event**: Open **Create Event** wizard -> click **Use AI Brief Assist** to auto-extract role quotas and budget limits with Gemini NLP.
+3. **Create Event**: Open **Create Event** wizard -> click **Use AI Brief Assist** to auto-extract role quotas and budget limits with Gemini NLP. Customize matching objective weights (*Skill*, *Reliability*, *Proximity*, *Rate Efficiency*).
 4. **Applicant Pool**: Open **Applicant Pool** -> Filter candidates by role & sort by match score, hourly rate, or proximity.
 5. **Run AI Matching**: Click **Run AI Matching** to trigger the deterministic solver and Gemini 1.5 explainability.
 6. **Alternative Permutations**: Click **Find Another Crew** to observe real-time Pareto trade-offs (*Budget-Optimized* vs *High-Reliability*).
 7. **Manual Selector**: Toggle **Select Manually** to demonstrate live interactive budget calculations.
-8. **Approve Roster**: Click **Approve Crew Roster** to trigger the atomic PostgreSQL transaction.
+8. **Approve Roster**: Click **Approve Crew Roster** to trigger the atomic PostgreSQL transaction (`approve_crew_transaction`).
 9. **Freelancer Perspective**: Switch to Freelancer (`rohan.mehta@muster.events`) -> open **My Applications** to view the **Confirmed Dispatch Pass & QR Token**.
 
 ---
@@ -167,7 +167,7 @@ Follow this 2-minute flow during judging evaluation:
 lib/
 ├── core/
 │   ├── constants/app_constants.dart          # Colors, spacing, typography tokens
-│   ├── services/ai_matching_service.dart     # Deterministic multi-constraint solver
+│   ├── services/ai_matching_service.dart     # Deterministic multi-constraint solver & weighted score engine
 │   ├── services/gemini_service.dart          # Gemini explainability client
 │   ├── supabase/supabase_config.dart         # Supabase client configuration
 │   ├── theme/app_theme.dart                  # Material 3 dark theme
@@ -187,7 +187,7 @@ lib/
 │   ├── freelancer/presentation/              # Discovery, shift status & QR pass views
 │   ├── notifications/presentation/           # Realtime audit log stream
 │   └── shell/presentation/app_shell.dart     # Adaptive navigation shell
-├── models/                                   # Domain models
+├── models/                                   # Domain models (EventItem, CrewMember, AppUser, etc.)
 └── main.dart                                 # GoRouter configuration & entry point
 ```
 
@@ -195,8 +195,8 @@ lib/
 
 ## 📄 Documentation
 
-* **[TECHNICAL_DOSSIER.md](TECHNICAL_DOSSIER.md)**: Comprehensive 40-section technical documentation covering architecture, mathematical formulas, RLS policies, schemas, and security.
-* **[MUSTER_COMPLETE_SUPABASE_SETUP.sql](MUSTER_COMPLETE_SUPABASE_SETUP.sql)**: Master SQL schema and migration file.
+* **[TECHNICAL_DOSSIER.md](TECHNICAL_DOSSIER.md)**: Comprehensive 24-section technical documentation covering architecture, mathematical formulas, RLS policies, schemas, and security.
+* **[MUSTER_FINAL_DATABASE_SETUP_AND_RLS.sql](MUSTER_FINAL_DATABASE_SETUP_AND_RLS.sql)**: Master SQL schema, auto-registration triggers, and complete RLS write policy migration file.
 
 ---
 
