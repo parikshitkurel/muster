@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../models/crew.dart';
 import '../../../data/repositories/event_repository.dart';
 
 class FinalCrewScreen extends ConsumerWidget {
@@ -105,6 +107,16 @@ class FinalCrewScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAssignVolunteerDialog(context, ref, evt),
+                    icon: const Icon(LucideIcons.userPlus, size: 16),
+                    label: const Text('Assign Volunteer'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -154,7 +166,17 @@ class FinalCrewScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              const Text('Active Roster Directory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Active Roster Directory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                  OutlinedButton.icon(
+                    onPressed: () => _showAssignVolunteerDialog(context, ref, evt),
+                    icon: const Icon(LucideIcons.userPlus, size: 14),
+                    label: const Text('+ Assign Volunteer'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
 
               crew.isEmpty
@@ -232,6 +254,107 @@ class FinalCrewScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showAssignVolunteerDialog(BuildContext context, WidgetRef ref, dynamic evt) {
+    final formKey = GlobalKey<FormState>();
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final roleCtrl = TextEditingController(text: 'Event Volunteer');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.bgSurface,
+        title: const Row(
+          children: [
+            Icon(LucideIcons.userPlus, color: AppColors.primary, size: 20),
+            SizedBox(width: 8),
+            Text('Assign Event Volunteer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter the volunteer details below to add them to the confirmed event roster.',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Volunteer Full Name *',
+                  hintText: 'e.g. Rahul Sharma',
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter volunteer name' : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number *',
+                  hintText: '+91 98765 43210',
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter phone number' : null,
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: roleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Assigned Role / Task',
+                  hintText: 'e.g. Hospitality Lead, Registration Desk',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final name = nameCtrl.text.trim();
+                final phone = phoneCtrl.text.trim();
+                final role = roleCtrl.text.trim().isEmpty ? 'Event Volunteer' : roleCtrl.text.trim();
+
+                final newVolunteer = CrewMember(
+                  freelancerId: 'vol_${DateTime.now().millisecondsSinceEpoch}',
+                  fullName: name,
+                  role: role,
+                  matchScore: 100,
+                  reliabilityScore: 100,
+                  allocatedCost: 0,
+                  rationale: 'Directly assigned as Event Volunteer by Organizer',
+                  phone: phone,
+                  email: 'volunteer@muster.events',
+                );
+
+                Navigator.of(ctx).pop();
+                await ref.read(eventsProvider.notifier).assignVolunteer(evt.id as String, newVolunteer);
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('✨ Volunteer $name assigned to ${evt.name}!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Assign Volunteer'),
+          ),
+        ],
       ),
     );
   }
