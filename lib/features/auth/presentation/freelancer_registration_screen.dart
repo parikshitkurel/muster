@@ -23,11 +23,7 @@ class _FreelancerRegistrationScreenState
   final _cityCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
-  final List<String> _skills = [
-    'Digital Mixing Consoles',
-    'Dante Audio Protocol',
-    'Line Array Rigging',
-  ];
+  final List<String> _skills = const [];
 
   @override
   void dispose() {
@@ -194,26 +190,6 @@ class _FreelancerRegistrationScreenState
                           hintText: '••••••••••••',
                         ),
                         validator: (v) => (v == null || v.length < 6) ? 'Min 6 chars' : null,
-                      ),
-                      const SizedBox(height: 20),
-
-                      const Text(
-                        'Verified Technical Skills & Certifications',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: _skills
-                            .map(
-                              (s) => Chip(
-                                label: Text(s, style: const TextStyle(fontSize: 11)),
-                                backgroundColor: AppColors.bgSurfaceSubtle,
-                                side: const BorderSide(color: AppColors.border),
-                              ),
-                            )
-                            .toList(),
                       ),
                       const SizedBox(height: 28),
 

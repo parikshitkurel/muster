@@ -25,8 +25,7 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
   String _sortBy = 'Match Score';
   bool _isManualMode = false;
   final Set<String> _selectedManualIds = {};
-
-  Set<String>? _eventApplicantIds;
+  List<FreelancerCandidate>? _eventCandidates;
   bool _isLoadingApps = true;
 
   @override
@@ -42,18 +41,50 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
       return;
     }
     try {
-      final res = await client
-          .from('applications')
-          .select('freelancer_id')
-          .eq('event_id', widget.eventId);
+      final res = await client.from('applications').select('''
+        id,
+        event_id,
+        freelancer_id,
+        applied_role,
+        proposed_rate,
+        status,
+        profiles:freelancer_id (full_name, email, phone),
+        freelancer_profiles:freelancer_id (primary_role, hourly_rate, city)
+      ''').eq('event_id', widget.eventId);
 
-      final ids = (res as List)
-          .map((r) => r['freelancer_id'] as String)
-          .toSet();
+      final List<FreelancerCandidate> list = [];
+
+      for (var row in (res as List)) {
+        final profileMap = row['profiles'] as Map<String, dynamic>? ?? {};
+        final freelancerProfileMap = row['freelancer_profiles'] as Map<String, dynamic>? ?? {};
+
+        final name = profileMap['full_name'] as String? ?? 'Freelancer Specialist';
+        final role = row['applied_role'] as String? ?? freelancerProfileMap['primary_role'] as String? ?? 'Event Specialist';
+        final rate = (row['proposed_rate'] as num?)?.toInt() ?? (freelancerProfileMap['hourly_rate'] as num?)?.toInt() ?? 1500;
+
+        final phone = profileMap['phone'] as String? ?? '+91 98765 43210';
+        final email = profileMap['email'] as String? ?? 'talent@muster.events';
+
+        list.add(
+          FreelancerCandidate(
+            id: row['freelancer_id'] as String,
+            name: name,
+            role: role,
+            expectedRate: rate,
+            experienceYears: 3,
+            phone: phone,
+            email: email,
+            skills: [role, 'Event Operations'],
+            matchScore: 95,
+            reliabilityScore: 98,
+            distanceKm: 5,
+          ),
+        );
+      }
 
       if (mounted) {
         setState(() {
-          _eventApplicantIds = ids;
+          _eventCandidates = list;
           _isLoadingApps = false;
         });
       }
@@ -66,7 +97,6 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
   @override
   Widget build(BuildContext context) {
     final eventsState = ref.watch(eventsProvider);
-    final freelancerState = ref.watch(freelancerProvider);
 
     if (eventsState.isLoading || _isLoadingApps) {
       return const Scaffold(
@@ -98,10 +128,7 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
     }
 
     final evt = evtMatches.isNotEmpty ? evtMatches.first : eventsState.events.first;
-    final allCandidates = freelancerState.allCandidates;
-    final candidates = _eventApplicantIds != null
-        ? allCandidates.where((c) => _eventApplicantIds!.contains(c.id)).toList()
-        : <FreelancerCandidate>[];
+    final candidates = _eventCandidates ?? [];
 
     // Filtering
     var filtered = candidates.where((cand) {

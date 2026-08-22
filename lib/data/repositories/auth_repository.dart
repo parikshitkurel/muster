@@ -198,6 +198,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       String? targetUserId;
+      String? authErrorMessage;
 
       // 1. Try GoTrue auth.signUp
       try {
@@ -216,7 +217,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           targetUserId = res.user!.id;
         }
       } catch (authErr) {
-        debugPrint('[Auth] Standard GoTrue signUp notice: $authErr. Executing resilient DB registration...');
+        debugPrint('[Auth] GoTrue signUp notice: $authErr. Checking profile resolution...');
+        authErrorMessage = authErr.toString();
       }
 
       // 2. Resilient Database Registration Pipeline
@@ -225,10 +227,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
           final existing = await client.from('profiles').select('id').eq('email', cleanEmail).maybeSingle();
           if (existing != null) {
             targetUserId = existing['id'] as String;
-          } else {
-            final ts = DateTime.now().millisecondsSinceEpoch.toString();
-            targetUserId = '${ts.substring(0, 8)}-0000-4000-8000-${ts.padRight(12, '0').substring(0, 12)}';
           }
+        }
+
+        if (targetUserId == null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: authErrorMessage ?? 'Registration failed. Please check password and network connection.',
+          );
+          return false;
         }
 
         await client.from('profiles').upsert({
@@ -322,6 +329,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       String? targetUserId;
+      String? authErrorMessage;
 
       // 1. Try GoTrue auth.signUp
       try {
@@ -341,7 +349,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           targetUserId = res.user!.id;
         }
       } catch (authErr) {
-        debugPrint('[Auth] Standard GoTrue signUp notice: $authErr. Executing resilient DB registration...');
+        debugPrint('[Auth] GoTrue signUp notice: $authErr. Checking profile resolution...');
+        authErrorMessage = authErr.toString();
       }
 
       // 2. Resilient Database Registration Pipeline
@@ -350,10 +359,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
           final existing = await client.from('profiles').select('id').eq('email', cleanEmail).maybeSingle();
           if (existing != null) {
             targetUserId = existing['id'] as String;
-          } else {
-            final ts = DateTime.now().millisecondsSinceEpoch.toString();
-            targetUserId = '${ts.substring(0, 8)}-0000-4000-8000-${ts.padRight(12, '0').substring(0, 12)}';
           }
+        }
+
+        if (targetUserId == null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: authErrorMessage ?? 'Registration failed. Please check password and network connection.',
+          );
+          return false;
         }
 
         await client.from('profiles').upsert({
