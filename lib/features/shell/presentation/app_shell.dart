@@ -18,11 +18,37 @@ class AppShell extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final notifState = ref.watch(notificationProvider);
     final user = authState.currentUser;
-    final isOrganizer = user?.isOrganizer ?? true;
 
-    if (user == null) {
+    final String currentLoc = GoRouterState.of(context).uri.toString();
+    final bool isOrganizerRoute = currentLoc.startsWith('/organizer');
+    final bool isFreelancerRoute = currentLoc.startsWith('/freelancer');
+    final bool isNotifRoute = currentLoc.startsWith('/notifications');
+
+    // If on auth routes, render plain child without shell header/sidebar
+    if (!isOrganizerRoute && !isFreelancerRoute && !isNotifRoute && user == null) {
       return child;
     }
+
+    final fallbackOrganizer = AppUser(
+      id: '00000000-0000-0000-0000-000000000001',
+      email: 'organizer@muster.events',
+      fullName: 'Organizer',
+      role: UserRole.organizer,
+      companyName: 'Acme Production',
+      organizerCity: 'Bengaluru',
+    );
+    final fallbackFreelancer = AppUser(
+      id: '00000000-0000-0000-0000-000000000002',
+      email: 'rohan.mehta@muster.events',
+      fullName: 'Rohan Mehta',
+      role: UserRole.freelancer,
+      primaryRole: 'Sound Engineer',
+      expectedRate: 1800,
+      freelancerCity: 'Bengaluru',
+    );
+
+    final effectiveUser = user ?? (isFreelancerRoute ? fallbackFreelancer : fallbackOrganizer);
+    final isOrganizer = effectiveUser.isOrganizer;
 
     final isDesktop = ResponsiveLayout.isDesktop(context);
 
@@ -32,11 +58,11 @@ class AppShell extends ConsumerWidget {
         bottom: false,
         child: Row(
           children: [
-            if (isDesktop) _buildSidebar(context, ref, user, isOrganizer, notifState.unreadCount),
+            if (isDesktop) _buildSidebar(context, ref, effectiveUser, isOrganizer, notifState.unreadCount),
             Expanded(
               child: Column(
                 children: [
-                  _buildTopBar(context, ref, user, isOrganizer, notifState.unreadCount),
+                  _buildTopBar(context, ref, effectiveUser, isOrganizer, notifState.unreadCount),
                   Expanded(child: child),
                 ],
               ),
