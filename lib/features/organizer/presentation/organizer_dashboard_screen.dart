@@ -16,8 +16,15 @@ class OrganizerDashboardScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final eventState = ref.watch(eventsProvider);
     final user = authState.currentUser;
-    final events = eventState.events;
+    final allEvents = eventState.events;
     final isMobile = ResponsiveLayout.isMobile(context);
+
+    final events = user != null
+        ? allEvents.where((e) {
+            return e.organizerId == user.id ||
+                (user.id == '00000000-0000-0000-0000-000000000000' && (e.organizerId.isEmpty || e.organizerId == '00000000-0000-0000-0000-000000000000'));
+          }).toList()
+        : allEvents;
 
     // Loading state
     if (eventState.isLoading) {

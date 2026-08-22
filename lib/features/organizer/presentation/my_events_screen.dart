@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../models/event.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/event_repository.dart';
 
 class MyEventsScreen extends ConsumerStatefulWidget {
@@ -20,13 +21,23 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final user = authState.currentUser;
     final eventState = ref.watch(eventsProvider);
-    final events = eventState.events;
+    final allEvents = eventState.events;
     final isMobile = ResponsiveLayout.isMobile(context);
 
-    final filtered = events.where((e) {
+    final userEvents = user != null
+        ? allEvents.where((e) {
+            return e.organizerId == user.id ||
+                (user.id == '00000000-0000-0000-0000-000000000000' && (e.organizerId.isEmpty || e.organizerId == '00000000-0000-0000-0000-000000000000'));
+          }).toList()
+        : allEvents;
+
+    final filtered = userEvents.where((e) {
       final matchesSearch = e.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          e.venue.toLowerCase().contains(_searchQuery.toLowerCase());
+          e.venue.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          e.city.toLowerCase().contains(_searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
       if (_selectedFilter == 'Published') return e.status == EventStatus.published;
