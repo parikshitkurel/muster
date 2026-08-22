@@ -239,45 +239,6 @@ class AppShell extends ConsumerWidget {
             ),
           ),
 
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: () {
-                final targetRole = isOrganizer ? UserRole.freelancer : UserRole.organizer;
-                if (targetRole == UserRole.organizer) {
-                  context.go('/organizer/dashboard');
-                } else {
-                  context.go('/freelancer/dashboard');
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.bgSurfaceSubtle,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isOrganizer ? LucideIcons.wrench : LucideIcons.briefcase,
-                      size: 16,
-                      color: AppColors.primaryLight,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isOrganizer ? 'Switch to Freelancer' : 'Switch to Organizer',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
