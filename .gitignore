@@ -14,9 +14,13 @@ migrate_working_dir/
 *.env
 *.env.local
 
-# Binary artifacts / APKs (Over GitHub 50MB-100MB limit)
+# Binary artifacts & APKs (Do not upload to GitHub - exceeds file size limits)
 *.apk
 *.aab
+APK/*.apk
+APK/MUSTER-*.apk
+/build/
+**/build/
 
 # IntelliJ / Android Studio
 *.iml
@@ -33,7 +37,6 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-build/
 /coverage/
 
 # Android build outputs
