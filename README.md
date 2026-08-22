@@ -23,48 +23,55 @@ Live events (concerts, technical conferences, expos, corporate summits) require 
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```mermaid
-graph TD
-    subgraph Client Layer [Cross-Platform Flutter Client]
-        UI[Material 3 UI Views / Lucide Outline Icons]
-        Router[GoRouter Declarative Navigation]
-        State[Riverpod State Notifiers & Providers]
+flowchart TD
+    subgraph ClientLayer["Cross-Platform Flutter Client"]
+        UI["Material 3 UI Views / Lucide Outline Icons"]
+        Router["GoRouter Declarative Navigation"]
+        State["Riverpod State Notifiers & Providers"]
     end
 
-    subgraph Repository Layer [Data Access Abstraction]
-        AuthRepo[AuthRepository]
-        EventRepo[EventRepository]
-        FreeRepo[FreelancerRepository]
-        MatchRepo[MatchingRepository]
-        AIRepo[MusterAIRepository]
-        NotifRepo[NotificationRepository]
+    subgraph RepositoryLayer["Data Access Abstraction Layer"]
+        AuthRepo["AuthRepository"]
+        EventRepo["EventRepository"]
+        FreeRepo["FreelancerRepository"]
+        MatchRepo["MatchingRepository"]
+        AIRepo["MusterAIRepository"]
+        NotifRepo["NotificationRepository"]
     end
 
-    subgraph Engine & Edge Layer [Deterministic Engine & Edge Function]
-        Solver[Deterministic Multi-Constraint Engine]
-        EdgeFunc[Supabase Edge Function: muster-ai]
-        Gemini[Google Gemini 1.5 Flash API - Server Secret]
+    subgraph EngineLayer["Deterministic Engine & Edge Function"]
+        Solver["Deterministic Multi-Constraint Engine"]
+        EdgeFunc["Supabase Edge Function: muster-ai"]
+        Gemini["Google Gemini 3.6 Flash API"]
     end
 
-    subgraph Backend Layer [Supabase Cloud BaaS]
-        SupaAuth[Supabase Auth / JWT]
-        PG[(PostgreSQL 15 Relational DB)]
-        RLS[Row-Level Security Policies]
-        RPC[approve_crew_transaction RPC]
-        Realtime[Supabase Realtime Postgres Changes]
+    subgraph BackendLayer["Supabase Cloud BaaS"]
+        SupaAuth["Supabase Auth / JWT"]
+        PG[("PostgreSQL 15 Relational DB")]
+        RLS["Row-Level Security Policies"]
+        RPC["approve_crew_transaction RPC"]
+        Realtime["Supabase Realtime Changes"]
     end
 
     UI --> State
     Router --> UI
-    State --> Repository Layer
-    Repository Layer --> Solver
+    State --> AuthRepo
+    State --> EventRepo
+    State --> FreeRepo
+    State --> MatchRepo
+    State --> AIRepo
+    State --> NotifRepo
+    MatchRepo --> Solver
     AIRepo --> EdgeFunc
     EdgeFunc --> Gemini
-    Repository Layer --> Backend Layer
+    AuthRepo --> SupaAuth
+    EventRepo --> PG
+    FreeRepo --> PG
+    NotifRepo --> Realtime
     RPC --> PG
-    Realtime -.-> State
 ```
 
 ---
