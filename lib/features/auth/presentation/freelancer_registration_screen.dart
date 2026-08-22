@@ -15,13 +15,13 @@ class FreelancerRegistrationScreen extends ConsumerStatefulWidget {
 class _FreelancerRegistrationScreenState
     extends ConsumerState<FreelancerRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController(text: 'Rohan Mehta');
-  final _emailCtrl = TextEditingController(text: 'rohan.mehta@muster.events');
-  final _phoneCtrl = TextEditingController(text: '+91 98765 43210');
-  final _roleCtrl = TextEditingController(text: 'Sound Engineer');
-  final _rateCtrl = TextEditingController(text: '1800');
-  final _cityCtrl = TextEditingController(text: 'Bengaluru');
-  final _passwordCtrl = TextEditingController(text: 'password123');
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _roleCtrl = TextEditingController();
+  final _rateCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
 
   final List<String> _skills = [
     'Digital Mixing Consoles',
@@ -50,6 +50,7 @@ class _FreelancerRegistrationScreenState
             primaryRole: _roleCtrl.text.trim(),
             expectedRate: int.tryParse(_rateCtrl.text) ?? 1500,
             city: _cityCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
             skills: _skills,
           );
 
@@ -111,14 +112,20 @@ class _FreelancerRegistrationScreenState
 
                       TextFormField(
                         controller: _nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Full Name *'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name *',
+                          hintText: 'e.g. Rohan Mehta',
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                       const SizedBox(height: 14),
 
                       TextFormField(
                         controller: _emailCtrl,
-                        decoration: const InputDecoration(labelText: 'Email Address *'),
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address *',
+                          hintText: 'e.g. rohan@muster.events',
+                        ),
                         validator: (v) => (v == null || !v.contains('@')) ? 'Valid email required' : null,
                       ),
                       const SizedBox(height: 14),
@@ -128,8 +135,11 @@ class _FreelancerRegistrationScreenState
                           Expanded(
                             child: TextFormField(
                               controller: _roleCtrl,
-                              decoration: const InputDecoration(labelText: 'Primary Specialization *'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Primary Specialization *',
+                                hintText: 'e.g. Sound Engineer',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -139,9 +149,10 @@ class _FreelancerRegistrationScreenState
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: 'Hourly Rate (₹) *',
+                                hintText: '1800',
                                 prefixText: '₹ ',
                               ),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                         ],
@@ -153,16 +164,22 @@ class _FreelancerRegistrationScreenState
                           Expanded(
                             child: TextFormField(
                               controller: _phoneCtrl,
-                              decoration: const InputDecoration(labelText: 'Phone Number *'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number *',
+                                hintText: 'e.g. +91 98765 43210',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextFormField(
                               controller: _cityCtrl,
-                              decoration: const InputDecoration(labelText: 'City *'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'City *',
+                                hintText: 'e.g. Bengaluru',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                         ],
@@ -172,7 +189,10 @@ class _FreelancerRegistrationScreenState
                       TextFormField(
                         controller: _passwordCtrl,
                         obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Password *'),
+                        decoration: const InputDecoration(
+                          labelText: 'Password *',
+                          hintText: '••••••••••••',
+                        ),
                         validator: (v) => (v == null || v.length < 6) ? 'Min 6 chars' : null,
                       ),
                       const SizedBox(height: 20),

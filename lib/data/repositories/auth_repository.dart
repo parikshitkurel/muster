@@ -152,23 +152,64 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String fullName,
     required String companyName,
     required String city,
+    required String phone,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     final client = SupabaseConfig.client;
 
     if (client != null) {
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.trim();
+
+      // Check duplicate Email in public.profiles
+      try {
+        final emailCheck = await client
+            .from('profiles')
+            .select('id, email')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+        if (emailCheck != null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'This email ($cleanEmail) is already registered. Please sign in or use a different email.',
+          );
+          return false;
+        }
+
+        // Check duplicate Phone in public.profiles
+        if (cleanPhone.isNotEmpty) {
+          final phoneCheck = await client
+              .from('profiles')
+              .select('id, phone')
+              .eq('phone', cleanPhone)
+              .maybeSingle();
+
+          if (phoneCheck != null) {
+            state = state.copyWith(
+              isLoading: false,
+              error: 'This phone number ($cleanPhone) is already registered to another account.',
+            );
+            return false;
+          }
+        }
+      } catch (checkErr) {
+        debugPrint('[Auth] Duplicate validation check notice: $checkErr');
+      }
+
       String? targetUserId;
 
       // 1. Try GoTrue auth.signUp
       try {
         final res = await client.auth.signUp(
-          email: email,
+          email: cleanEmail,
           password: password,
           data: {
             'role': 'organizer',
-            'full_name': fullName,
-            'company_name': companyName,
-            'city': city,
+            'full_name': fullName.trim(),
+            'company_name': companyName.trim(),
+            'city': city.trim(),
+            'phone': cleanPhone,
           },
         );
         if (res.user != null) {
@@ -181,7 +222,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // 2. Resilient Database Registration Pipeline
       try {
         if (targetUserId == null) {
-          final existing = await client.from('profiles').select('id').eq('email', email.trim().toLowerCase()).maybeSingle();
+          final existing = await client.from('profiles').select('id').eq('email', cleanEmail).maybeSingle();
           if (existing != null) {
             targetUserId = existing['id'] as String;
           } else {
@@ -192,8 +233,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         await client.from('profiles').upsert({
           'id': targetUserId,
-          'email': email.trim().toLowerCase(),
+          'email': cleanEmail,
           'full_name': fullName.trim(),
+          'phone': cleanPhone,
           'role': 'organizer',
         });
         await client.from('organizer_profiles').upsert({
@@ -204,8 +246,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         final appUser = AppUser(
           id: targetUserId,
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
           fullName: fullName.trim(),
+          phone: cleanPhone,
           role: UserRole.organizer,
           companyName: companyName.trim(),
           organizerCity: city.trim(),
@@ -232,25 +275,66 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String primaryRole,
     required int expectedRate,
     required String city,
+    required String phone,
     required List<String> skills,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     final client = SupabaseConfig.client;
 
     if (client != null) {
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.trim();
+
+      // Check duplicate Email in public.profiles
+      try {
+        final emailCheck = await client
+            .from('profiles')
+            .select('id, email')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+        if (emailCheck != null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'This email ($cleanEmail) is already registered. Please sign in or use a different email.',
+          );
+          return false;
+        }
+
+        // Check duplicate Phone in public.profiles
+        if (cleanPhone.isNotEmpty) {
+          final phoneCheck = await client
+              .from('profiles')
+              .select('id, phone')
+              .eq('phone', cleanPhone)
+              .maybeSingle();
+
+          if (phoneCheck != null) {
+            state = state.copyWith(
+              isLoading: false,
+              error: 'This phone number ($cleanPhone) is already registered to another account.',
+            );
+            return false;
+          }
+        }
+      } catch (checkErr) {
+        debugPrint('[Auth] Duplicate validation check notice: $checkErr');
+      }
+
       String? targetUserId;
 
       // 1. Try GoTrue auth.signUp
       try {
         final res = await client.auth.signUp(
-          email: email,
+          email: cleanEmail,
           password: password,
           data: {
             'role': 'freelancer',
-            'full_name': fullName,
-            'primary_role': primaryRole,
+            'full_name': fullName.trim(),
+            'primary_role': primaryRole.trim(),
             'hourly_rate': expectedRate,
-            'city': city,
+            'city': city.trim(),
+            'phone': cleanPhone,
           },
         );
         if (res.user != null) {
@@ -263,7 +347,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // 2. Resilient Database Registration Pipeline
       try {
         if (targetUserId == null) {
-          final existing = await client.from('profiles').select('id').eq('email', email.trim().toLowerCase()).maybeSingle();
+          final existing = await client.from('profiles').select('id').eq('email', cleanEmail).maybeSingle();
           if (existing != null) {
             targetUserId = existing['id'] as String;
           } else {
@@ -274,8 +358,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         await client.from('profiles').upsert({
           'id': targetUserId,
-          'email': email.trim().toLowerCase(),
+          'email': cleanEmail,
           'full_name': fullName.trim(),
+          'phone': cleanPhone,
           'role': 'freelancer',
         });
         await client.from('freelancer_profiles').upsert({
@@ -294,8 +379,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
         final appUser = AppUser(
           id: targetUserId,
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
           fullName: fullName.trim(),
+          phone: cleanPhone,
           role: UserRole.freelancer,
           primaryRole: primaryRole.trim(),
           expectedRate: expectedRate,
@@ -332,6 +418,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      if (phone.trim().isNotEmpty) {
+        final phoneCheck = await client
+            .from('profiles')
+            .select('id')
+            .eq('phone', phone.trim())
+            .neq('id', user.id)
+            .maybeSingle();
+
+        if (phoneCheck != null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'This phone number (${phone.trim()}) is already registered to another account.',
+          );
+          throw Exception('This phone number (${phone.trim()}) is already registered to another account.');
+        }
+      }
+
       debugPrint('[Supabase WRITE] Updating organizer profile for user ${user.id}...');
       // 1. Update public.profiles
       await client.from('profiles').update({
@@ -378,6 +481,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      if (phone.trim().isNotEmpty) {
+        final phoneCheck = await client
+            .from('profiles')
+            .select('id')
+            .eq('phone', phone.trim())
+            .neq('id', user.id)
+            .maybeSingle();
+
+        if (phoneCheck != null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'This phone number (${phone.trim()}) is already registered to another account.',
+          );
+          throw Exception('This phone number (${phone.trim()}) is already registered to another account.');
+        }
+      }
+
       debugPrint('[Supabase WRITE] Updating freelancer profile for user ${user.id}...');
       // 1. Update public.profiles
       await client.from('profiles').update({

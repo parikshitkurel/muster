@@ -15,12 +15,12 @@ class OrganizerRegistrationScreen extends ConsumerStatefulWidget {
 class _OrganizerRegistrationScreenState
     extends ConsumerState<OrganizerRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController(text: 'Vikramaditya Roy');
-  final _companyCtrl = TextEditingController(text: 'Apex Event Production Pvt Ltd');
-  final _emailCtrl = TextEditingController(text: 'organizer@muster.events');
-  final _phoneCtrl = TextEditingController(text: '+91 98765 43210');
-  final _cityCtrl = TextEditingController(text: 'Bengaluru');
-  final _passwordCtrl = TextEditingController(text: 'password123');
+  final _nameCtrl = TextEditingController();
+  final _companyCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -41,6 +41,7 @@ class _OrganizerRegistrationScreenState
             fullName: _nameCtrl.text.trim(),
             companyName: _companyCtrl.text.trim(),
             city: _cityCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
           );
 
       if (success && mounted) {
@@ -101,21 +102,30 @@ class _OrganizerRegistrationScreenState
 
                       TextFormField(
                         controller: _nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Full Name *'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name *',
+                          hintText: 'e.g. Vikramaditya Roy',
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                       const SizedBox(height: 14),
 
                       TextFormField(
                         controller: _companyCtrl,
-                        decoration: const InputDecoration(labelText: 'Organization / Agency Name *'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Organization / Agency Name *',
+                          hintText: 'e.g. Apex Event Production',
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                       const SizedBox(height: 14),
 
                       TextFormField(
                         controller: _emailCtrl,
-                        decoration: const InputDecoration(labelText: 'Work Email *'),
+                        decoration: const InputDecoration(
+                          labelText: 'Work Email *',
+                          hintText: 'e.g. organizer@company.com',
+                        ),
                         validator: (v) => (v == null || !v.contains('@')) ? 'Valid email required' : null,
                       ),
                       const SizedBox(height: 14),
@@ -125,16 +135,22 @@ class _OrganizerRegistrationScreenState
                           Expanded(
                             child: TextFormField(
                               controller: _phoneCtrl,
-                              decoration: const InputDecoration(labelText: 'Phone Number *'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Phone Number *',
+                                hintText: 'e.g. +91 98765 43210',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextFormField(
                               controller: _cityCtrl,
-                              decoration: const InputDecoration(labelText: 'Primary City *'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                              decoration: const InputDecoration(
+                                labelText: 'Primary City *',
+                                hintText: 'e.g. Bengaluru',
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                             ),
                           ),
                         ],
@@ -144,7 +160,10 @@ class _OrganizerRegistrationScreenState
                       TextFormField(
                         controller: _passwordCtrl,
                         obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Password *'),
+                        decoration: const InputDecoration(
+                          labelText: 'Password *',
+                          hintText: '••••••••••••',
+                        ),
                         validator: (v) => (v == null || v.length < 6) ? 'Min 6 chars' : null,
                       ),
                       const SizedBox(height: 28),
