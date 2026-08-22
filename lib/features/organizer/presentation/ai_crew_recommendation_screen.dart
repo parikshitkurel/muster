@@ -6,8 +6,9 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/services/ai_matching_service.dart';
 import '../../../data/repositories/event_repository.dart';
-import '../../../data/repositories/freelancer_repository.dart';
 import '../../../data/repositories/matching_repository.dart';
+import '../../../core/supabase/supabase_config.dart';
+import '../../../models/freelancer.dart';
 
 class AICrewRecommendationScreen extends ConsumerStatefulWidget {
   final String eventId;
@@ -27,20 +28,80 @@ class AICrewRecommendationScreen extends ConsumerStatefulWidget {
 class _AICrewRecommendationScreenState
     extends ConsumerState<AICrewRecommendationScreen> {
   late int _currentPermutation;
+  List<FreelancerCandidate>? _appliedCandidates;
+  bool _isLoadingApplicants = true;
 
   @override
   void initState() {
     super.initState();
     _currentPermutation = widget.permutation;
+    _fetchAppliedCandidates();
+  }
+
+  Future<void> _fetchAppliedCandidates() async {
+    final client = SupabaseConfig.client;
+    if (client == null) {
+      if (mounted) setState(() => _isLoadingApplicants = false);
+      return;
+    }
+    try {
+      final res = await client.from('applications').select('''
+        id,
+        event_id,
+        freelancer_id,
+        applied_role,
+        proposed_rate,
+        status,
+        profiles:freelancer_id (full_name, email, phone),
+        freelancer_profiles:freelancer_id (primary_role, hourly_rate, city)
+      ''').eq('event_id', widget.eventId);
+
+      final List<FreelancerCandidate> list = [];
+      for (var row in (res as List)) {
+        final profileMap = row['profiles'] as Map<String, dynamic>? ?? {};
+        final freelancerProfileMap = row['freelancer_profiles'] as Map<String, dynamic>? ?? {};
+
+        final name = profileMap['full_name'] as String? ?? 'Freelancer Specialist';
+        final role = row['applied_role'] as String? ?? freelancerProfileMap['primary_role'] as String? ?? 'Event Specialist';
+        final rate = (row['proposed_rate'] as num?)?.toInt() ?? (freelancerProfileMap['hourly_rate'] as num?)?.toInt() ?? 1500;
+        final phone = profileMap['phone'] as String? ?? '+91 98765 43210';
+        final email = profileMap['email'] as String? ?? 'talent@muster.events';
+
+        list.add(
+          FreelancerCandidate(
+            id: row['freelancer_id'] as String,
+            name: name,
+            role: role,
+            expectedRate: rate,
+            experienceYears: 3,
+            phone: phone,
+            email: email,
+            skills: [role, 'Event Operations'],
+            matchScore: 95,
+            reliabilityScore: 98,
+            distanceKm: 5,
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _appliedCandidates = list;
+          _isLoadingApplicants = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Supabase] Load recommendation applicants error: $e');
+      if (mounted) setState(() => _isLoadingApplicants = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final eventsState = ref.watch(eventsProvider);
-    final freelancerState = ref.watch(freelancerProvider);
     final matchingState = ref.watch(matchingProvider);
 
-    if (eventsState.isLoading) {
+    if (eventsState.isLoading || _isLoadingApplicants) {
       return const Scaffold(
         backgroundColor: AppColors.bgCanvas,
         body: Center(child: CircularProgressIndicator()),
@@ -71,12 +132,13 @@ class _AICrewRecommendationScreenState
 
     final evt = evtMatches.isNotEmpty ? evtMatches.first : eventsState.events.first;
 
+    final appliedCandidates = _appliedCandidates ?? [];
     final cachedList = matchingState.cachedRecommendations[evt.id];
     final result = (cachedList != null && cachedList.length > _currentPermutation)
         ? cachedList[_currentPermutation]
         : AIMatchingService.generateRecommendation(
             evt,
-            freelancerState.allCandidates,
+            appliedCandidates,
             permutationIndex: _currentPermutation,
           );
 
