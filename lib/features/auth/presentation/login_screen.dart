@@ -291,51 +291,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'HACKATHON DEMO SHORTCUTS',
+                              'HACKATHON TEST ACCOUNTS (PSE15)',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textMuted,
+                                color: AppColors.primary,
                                 letterSpacing: 0.8,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedRole = UserRole.organizer;
-                                        _emailCtrl.text = 'organizer@muster.events';
-                                      });
-                                      _handleLogin();
-                                    },
-                                    icon: const Icon(LucideIcons.briefcase, size: 14),
-                                    label: const Text('Demo Organizer Login', style: TextStyle(fontSize: 11)),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedRole = UserRole.freelancer;
-                                        _emailCtrl.text = 'rohan.mehta@muster.events';
-                                      });
-                                      _handleLogin();
-                                    },
-                                    icon: const Icon(LucideIcons.wrench, size: 14),
-                                    label: const Text('Demo Freelancer Login', style: TextStyle(fontSize: 11)),
-                                  ),
-                                ),
+                            DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                labelText: 'Select Test Account',
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'org01', child: Text('Organizer 01: Arjun Mehta (Indore)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'org02', child: Text('Organizer 02: Riya Kapoor (Bhopal)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free01', child: Text('Freelancer 01: Aarav Sharma (Sr Ops, Indore)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free02', child: Text('Freelancer 02: Ishita Verma (Hospitality, Indore)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free03', child: Text('Freelancer 03: Kabir Patel (Sr AV, Ujjain)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free04', child: Text('Freelancer 04: Ananya Joshi (Stage Coord, Bhopal)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free05', child: Text('Freelancer 05: Rohan Singh (Sr Security, Dewas)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
+                                DropdownMenuItem(value: 'free06', child: Text('Freelancer 06: Meera Shah (Jr Reg, Indore)', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11))),
                               ],
+                              onChanged: (val) {
+                                if (val == 'org01') {
+                                  setState(() {
+                                    _selectedRole = UserRole.organizer;
+                                    _emailCtrl.text = 'organizer01@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'org02') {
+                                  setState(() {
+                                    _selectedRole = UserRole.organizer;
+                                    _emailCtrl.text = 'organizer02@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free01') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer01@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free02') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer02@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free03') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer03@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free04') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer04@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free05') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer05@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                } else if (val == 'free06') {
+                                  setState(() {
+                                    _selectedRole = UserRole.freelancer;
+                                    _emailCtrl.text = 'freelancer06@muster.test';
+                                    _passwordCtrl.text = 'MusterTest@2026';
+                                  });
+                                }
+                              },
                             ),
                           ],
                         ),

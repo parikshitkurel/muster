@@ -86,9 +86,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     // Local fallback for offline/demo reliability
     await Future.delayed(const Duration(milliseconds: 300));
-    final demoUser = role == UserRole.organizer
-        ? MockData.organizerUser
-        : MockData.freelancerUser;
+    AppUser demoUser;
+
+    if (email == 'organizer02@muster.test') {
+      demoUser = MockData.organizer02User;
+    } else if (email.startsWith('freelancer') || role == UserRole.freelancer) {
+      final cand = MockData.allCandidates.firstWhere(
+        (c) => c.email == email,
+        orElse: () => MockData.allCandidates.first,
+      );
+      demoUser = AppUser(
+        id: cand.id,
+        email: cand.email,
+        fullName: cand.name,
+        role: UserRole.freelancer,
+        primaryRole: cand.role,
+        expectedRate: cand.expectedRate,
+        experienceYears: cand.experienceYears,
+        reliabilityScore: cand.reliabilityScore,
+        freelancerCity: 'Indore, Madhya Pradesh',
+        skills: cand.skills,
+      );
+    } else {
+      demoUser = MockData.organizerUser;
+    }
+
     state = state.copyWith(currentUser: demoUser, isLoading: false);
     return true;
   }
