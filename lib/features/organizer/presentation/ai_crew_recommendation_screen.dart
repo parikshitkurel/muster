@@ -172,13 +172,23 @@ class _AICrewRecommendationScreenState
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
                         onPressed: result.isValidBudget
-                            ? () {
-                                ref.read(eventsProvider.notifier).approveCrew(
-                                      evt.id,
-                                      result.recommendedCrew,
-                                      result.totalCost,
+                            ? () async {
+                                try {
+                                  await ref.read(eventsProvider.notifier).approveCrew(
+                                        evt.id,
+                                        result.recommendedCrew,
+                                        result.totalCost,
+                                      );
+                                  if (context.mounted) {
+                                    context.go('/organizer/final-crew/${evt.id}');
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error approving crew: $e'), backgroundColor: AppColors.danger),
                                     );
-                                context.go('/organizer/final-crew/${evt.id}');
+                                  }
+                                }
                               }
                             : null,
                         icon: const Icon(LucideIcons.checkCircle, size: 16),

@@ -56,18 +56,32 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     super.dispose();
   }
 
-  void _publishEvent() {
+  bool _isPublishing = false;
+
+  Future<void> _publishEvent() async {
+    if (_isPublishing) return;
+    setState(() => _isPublishing = true);
+
     final name = _nameCtrl.text.trim().isEmpty ? 'Untitled Event' : _nameCtrl.text.trim();
     final budget = int.tryParse(_budgetCtrl.text) ?? 50000;
     final user = ref.read(authProvider).currentUser;
+
+    if (user == null) {
+      setState(() => _isPublishing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in before publishing an event.'), backgroundColor: AppColors.danger),
+      );
+      return;
+    }
+
     final newEvent = EventItem(
-      id: 'evt_${DateTime.now().millisecondsSinceEpoch}',
-      organizerId: user?.id ?? '00000000-0000-0000-0000-000000000001',
+      id: '', // Empty ID will let Supabase automatically generate a valid UUID v4
+      organizerId: user.id,
       name: name,
       type: _eventType,
       date: _dateCtrl.text.trim().isEmpty ? DateTime.now().toString().substring(0, 10) : _dateCtrl.text.trim(),
       venue: _venueCtrl.text.trim().isEmpty ? 'TBD' : _venueCtrl.text.trim(),
-      city: _cityCtrl.text.trim().isEmpty ? (user?.organizerCity ?? 'Bengaluru') : _cityCtrl.text.trim(),
+      city: _cityCtrl.text.trim().isEmpty ? user.organizerCity : _cityCtrl.text.trim(),
       budget: budget,
       proximityKm: _proximityKm,
       status: EventStatus.published,
@@ -76,11 +90,29 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
       description: _descCtrl.text.trim(),
     );
 
-    ref.read(eventsProvider.notifier).addEvent(newEvent);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Event published successfully!'), backgroundColor: AppColors.success),
-    );
-    context.go('/organizer/my-events');
+    try {
+      await ref.read(eventsProvider.notifier).addEvent(newEvent);
+      if (!mounted) return;
+      setState(() => _isPublishing = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✨ Event and roles successfully created in Supabase database!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      context.go('/organizer/my-events');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isPublishing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Database Error creating event: $e'),
+          backgroundColor: AppColors.danger,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   void _showAddRoleDialog({EventRequirement? existing, int? editIndex}) {
@@ -399,9 +431,15 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                   else
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-                      onPressed: _publishEvent,
-                      icon: const Icon(LucideIcons.send, size: 16),
-                      label: const Text('Publish Event & Open Candidate Pool'),
+                      onPressed: _isPublishing ? null : _publishEvent,
+                      icon: _isPublishing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(LucideIcons.send, size: 16),
+                      label: Text(_isPublishing ? 'Publishing to Database...' : 'Publish Event & Open Candidate Pool'),
                     ),
                 ],
               ),

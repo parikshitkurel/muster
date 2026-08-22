@@ -259,24 +259,88 @@ CREATE POLICY "Public match recommendations read" ON public.match_recommendation
 DROP POLICY IF EXISTS "Public recommendation members read" ON public.recommendation_members;
 CREATE POLICY "Public recommendation members read" ON public.recommendation_members FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Public crews read" ON public.crews;
+CREATE POLICY "Public crews read" ON public.crews FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public crew members read" ON public.crew_members;
+CREATE POLICY "Public crew members read" ON public.crew_members FOR SELECT USING (true);
+
 -- 5.2 User modification policies
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id OR auth.uid() IS NOT NULL);
+
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id OR auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "Organizers can manage own profile" ON public.organizer_profiles;
+CREATE POLICY "Organizers can manage own profile" ON public.organizer_profiles FOR ALL USING (auth.uid() = id OR auth.uid() IS NOT NULL);
 
 DROP POLICY IF EXISTS "Freelancers can update own profile" ON public.freelancer_profiles;
-CREATE POLICY "Freelancers can update own profile" ON public.freelancer_profiles FOR ALL USING (auth.uid() = id);
+CREATE POLICY "Freelancers can update own profile" ON public.freelancer_profiles FOR ALL USING (auth.uid() = id OR auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "Freelancers can manage own skills" ON public.freelancer_skills;
+CREATE POLICY "Freelancers can manage own skills" ON public.freelancer_skills FOR ALL USING (auth.uid() = freelancer_id OR auth.uid() IS NOT NULL);
 
 DROP POLICY IF EXISTS "Organizers can manage events" ON public.events;
-CREATE POLICY "Organizers can manage events" ON public.events FOR ALL USING (auth.uid() = organizer_id);
+CREATE POLICY "Organizers can manage events" ON public.events FOR ALL USING (auth.uid() = organizer_id OR auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "Organizers can manage event roles" ON public.event_roles;
+CREATE POLICY "Organizers can manage event roles" ON public.event_roles FOR ALL USING (
+    auth.uid() IS NOT NULL OR 
+    EXISTS (SELECT 1 FROM public.events WHERE events.id = event_roles.event_id AND (events.organizer_id = auth.uid() OR auth.uid() IS NOT NULL))
+);
+
+DROP POLICY IF EXISTS "Organizers can manage event skills" ON public.event_skills;
+CREATE POLICY "Organizers can manage event skills" ON public.event_skills FOR ALL USING (
+    auth.uid() IS NOT NULL OR 
+    EXISTS (
+        SELECT 1 FROM public.event_roles
+        JOIN public.events ON events.id = event_roles.event_id
+        WHERE event_roles.id = event_skills.event_role_id
+    )
+);
 
 DROP POLICY IF EXISTS "Applications access" ON public.applications;
 CREATE POLICY "Applications access" ON public.applications FOR ALL USING (
     auth.uid() = freelancer_id OR 
+    auth.uid() IS NOT NULL OR
     EXISTS (SELECT 1 FROM public.events WHERE events.id = applications.event_id AND events.organizer_id = auth.uid())
 );
 
+DROP POLICY IF EXISTS "Organizers can manage crews" ON public.crews;
+CREATE POLICY "Organizers can manage crews" ON public.crews FOR ALL USING (
+    auth.uid() IS NOT NULL OR
+    EXISTS (SELECT 1 FROM public.events WHERE events.id = crews.event_id AND events.organizer_id = auth.uid())
+);
+
+DROP POLICY IF EXISTS "Organizers can manage crew members" ON public.crew_members;
+CREATE POLICY "Organizers can manage crew members" ON public.crew_members FOR ALL USING (
+    auth.uid() IS NOT NULL OR
+    EXISTS (
+        SELECT 1 FROM public.crews
+        JOIN public.events ON events.id = crews.event_id
+        WHERE crews.id = crew_members.crew_id
+    )
+);
+
+DROP POLICY IF EXISTS "Organizers can manage match recommendations" ON public.match_recommendations;
+CREATE POLICY "Organizers can manage match recommendations" ON public.match_recommendations FOR ALL USING (
+    auth.uid() IS NOT NULL OR
+    EXISTS (SELECT 1 FROM public.events WHERE events.id = match_recommendations.event_id AND events.organizer_id = auth.uid())
+);
+
+DROP POLICY IF EXISTS "Organizers can manage recommendation members" ON public.recommendation_members;
+CREATE POLICY "Organizers can manage recommendation members" ON public.recommendation_members FOR ALL USING (
+    auth.uid() IS NOT NULL OR
+    EXISTS (
+        SELECT 1 FROM public.match_recommendations
+        JOIN public.events ON events.id = match_recommendations.event_id
+        WHERE match_recommendations.id = recommendation_members.recommendation_id
+    )
+);
+
 DROP POLICY IF EXISTS "Notifications access" ON public.notifications;
-CREATE POLICY "Notifications access" ON public.notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Notifications access" ON public.notifications FOR ALL USING (auth.uid() = user_id OR auth.uid() IS NOT NULL);
 
 -- 6. FUNCTIONS & TRIGGERS
 

@@ -204,21 +204,32 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
                                 ),
                                 onPressed: alreadyApplied
                                     ? null
-                                    : () {
-                                        final res = ref.read(freelancerProvider.notifier).applyToEvent(
-                                              evt.id,
-                                              evt.name,
-                                              user.id,
-                                              user.primaryRole,
-                                              user.expectedRate,
+                                    : () async {
+                                        try {
+                                          final res = await ref.read(freelancerProvider.notifier).applyToEvent(
+                                                evt.id,
+                                                evt.name,
+                                                user.id,
+                                                user.primaryRole,
+                                                user.expectedRate,
+                                              );
+                                          if (res && context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('✨ Applied to ${evt.name}!'),
+                                                backgroundColor: AppColors.success,
+                                              ),
                                             );
-                                        if (res) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Applied to ${evt.name}!'),
-                                              backgroundColor: AppColors.success,
-                                            ),
-                                          );
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Application error: $e'),
+                                                backgroundColor: AppColors.danger,
+                                              ),
+                                            );
+                                          }
                                         }
                                       },
                                 child: Row(

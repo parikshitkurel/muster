@@ -17,6 +17,7 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
   late TextEditingController _cityCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _emailCtrl;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -153,12 +154,43 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: AppColors.success),
-                            );
-                          },
-                          child: const Text('Save Profile Changes'),
+                          onPressed: _isSaving
+                              ? null
+                              : () async {
+                                  setState(() => _isSaving = true);
+                                  try {
+                                    await ref.read(authProvider.notifier).updateOrganizerProfile(
+                                          fullName: _nameCtrl.text,
+                                          companyName: _companyCtrl.text,
+                                          city: _cityCtrl.text,
+                                          phone: _phoneCtrl.text,
+                                        );
+                                    if (!context.mounted) return;
+                                    setState(() => _isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('✨ Profile updated in Supabase database!'),
+                                        backgroundColor: AppColors.success,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    setState(() => _isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error saving profile: $e'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                  }
+                                },
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Save Profile Changes'),
                         ),
                       ),
                     ],

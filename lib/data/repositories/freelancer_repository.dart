@@ -124,55 +124,90 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
     }
   }
 
-  bool applyToEvent(
+  Future<bool> applyToEvent(
     String eventId,
     String eventName,
     String freelancerId,
     String role,
     int rate,
-  ) {
-    if (state.myApplications.any((a) => a.eventId == eventId && a.freelancerId == freelancerId)) {
-      return false;
+  ) async {
+    final client = SupabaseConfig.client;
+    if (client == null) {
+      throw Exception('Supabase client is not connected.');
     }
 
-    final newApp = FreelancerApplication(
-      id: 'app_${DateTime.now().millisecondsSinceEpoch}',
-      eventId: eventId,
-      eventName: eventName,
-      freelancerId: freelancerId,
-      appliedRole: role,
-      proposedRate: rate,
-      status: ApplicationStatus.pending,
-      appliedDate: DateTime.now().toString().substring(0, 10),
-      feedback: 'Application submitted via MUSTER matching portal.',
-    );
+    final validFreelancerId = (freelancerId.length == 36 && freelancerId.contains('-'))
+        ? freelancerId
+        : (client.auth.currentUser?.id ?? '00000000-0000-0000-0000-000000000002');
 
-    state = state.copyWith(myApplications: [newApp, ...state.myApplications]);
-    _persistApplicationToSupabase(newApp);
-    return true;
-  }
-
-  Future<void> _persistApplicationToSupabase(FreelancerApplication app) async {
-    final client = SupabaseConfig.client;
-    if (client == null) return;
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final validFreelancerId = (app.freelancerId.length == 36)
-          ? app.freelancerId
-          : '00000000-0000-0000-0000-000000000002';
-
-      await client.from('applications').insert({
-        'event_id': app.eventId,
+      debugPrint('[Supabase WRITE] Submitting application for event $eventId by freelancer $validFreelancerId...');
+      final insertRes = await client.from('applications').insert({
+        'event_id': eventId,
         'freelancer_id': validFreelancerId,
-        'applied_role': app.appliedRole,
-        'proposed_rate': app.proposedRate,
+        'applied_role': role,
+        'proposed_rate': rate,
         'status': 'pending',
-        'feedback': app.feedback,
-      });
-      debugPrint('[Supabase] Application persisted for ${app.eventName}');
+        'feedback': 'Application submitted via MUSTER matching portal.',
+      }).select().single();
+
+      debugPrint('[Supabase WRITE SUCCESS] Application created with ID: ${insertRes['id']}');
+
+      // Auto-create notification for organizer
+      try {
+        final evtRes = await client.from('events').select('organizer_id, name').eq('id', eventId).maybeSingle();
+        if (evtRes != null && evtRes['organizer_id'] != null) {
+          final orgId = evtRes['organizer_id'] as String;
+          await client.from('notifications').insert({
+            'user_id': orgId,
+            'title': 'New Candidate Application',
+            'message': 'A candidate applied for $role in ${evtRes['name']}.',
+            'type': 'candidate_applied',
+            'related_event_id': eventId,
+          });
+          debugPrint('[Supabase WRITE SUCCESS] Notification sent to organizer $orgId.');
+        }
+      } catch (notifErr) {
+        debugPrint('[Supabase] Non-critical notification write error: $notifErr');
+      }
+
       await fetchApplicationsFromSupabase();
-    } catch (e) {
-      debugPrint('[Supabase] Application persist error: $e');
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Application persist error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<bool> updateApplicationStatus(String applicationId, ApplicationStatus status) async {
+    final client = SupabaseConfig.client;
+    if (client == null) {
+      throw Exception('Supabase client is not connected.');
+    }
+
+    try {
+      String statusStr = 'pending';
+      if (status == ApplicationStatus.shortlisted) statusStr = 'shortlisted';
+      if (status == ApplicationStatus.selected) statusStr = 'selected';
+      if (status == ApplicationStatus.rejected) statusStr = 'rejected';
+
+      debugPrint('[Supabase WRITE] Updating application $applicationId status to $statusStr...');
+      await client.from('applications').update({
+        'status': statusStr,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', applicationId);
+
+      debugPrint('[Supabase WRITE SUCCESS] Application status updated.');
+      await fetchApplicationsFromSupabase();
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Update application status error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
     }
   }
 }

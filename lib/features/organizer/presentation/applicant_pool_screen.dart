@@ -182,7 +182,7 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
                       onPressed: (_selectedManualIds.length >= evt.totalCrewNeeded && !isBudgetExceeded)
-                          ? () {
+                          ? () async {
                               final crew = selectedManualCandidates
                                   .map(
                                     (c) => CrewMember(
@@ -196,8 +196,18 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
                                     ),
                                   )
                                   .toList();
-                              ref.read(eventsProvider.notifier).approveCrew(evt.id, crew, manualCost);
-                              context.go('/organizer/final-crew/${evt.id}');
+                              try {
+                                await ref.read(eventsProvider.notifier).approveCrew(evt.id, crew, manualCost);
+                                if (context.mounted) {
+                                  context.go('/organizer/final-crew/${evt.id}');
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error approving crew: $e'), backgroundColor: AppColors.danger),
+                                  );
+                                }
+                              }
                             }
                           : null,
                       child: const Text('Confirm Manual Crew →'),

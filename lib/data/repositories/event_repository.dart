@@ -122,72 +122,99 @@ class EventNotifier extends StateNotifier<EventState> {
     }
   }
 
-  Future<void> addEvent(EventItem event) async {
+  Future<EventItem?> addEvent(EventItem event) async {
     final client = SupabaseConfig.client;
+    if (client == null) {
+      throw Exception('Supabase client is not connected.');
+    }
 
-    state = state.copyWith(events: [event, ...state.events]);
+    state = state.copyWith(isLoading: true, error: null);
 
-    if (client != null) {
-      try {
-        final eventPayload = event.toSupabase();
-        await client.from('events').insert(eventPayload);
+    try {
+      final eventPayload = event.toSupabase();
+      debugPrint('[Supabase WRITE] Inserting event: $eventPayload');
 
-        for (var req in event.requirements) {
-          await client.from('event_roles').insert(req.toSupabase(event.id));
-        }
-        await fetchEventsFromSupabase();
-      } catch (e) {
-        debugPrint('[Supabase] Add event error: $e');
+      final res = await client
+          .from('events')
+          .insert(eventPayload)
+          .select('''
+            *,
+            event_roles (
+              role_name,
+              quantity,
+              max_rate_per_hour,
+              min_experience_years
+            )
+          ''')
+          .single();
+
+      final createdEventId = res['id'] as String;
+      debugPrint('[Supabase WRITE SUCCESS] Event created with ID: $createdEventId');
+
+      if (event.requirements.isNotEmpty) {
+        final rolesPayload = event.requirements
+            .map((req) => req.toSupabase(createdEventId))
+            .toList();
+        debugPrint('[Supabase WRITE] Inserting ${rolesPayload.length} event roles for event $createdEventId');
+        await client.from('event_roles').insert(rolesPayload);
+        debugPrint('[Supabase WRITE SUCCESS] Event roles inserted successfully.');
       }
+
+      await fetchEventsFromSupabase();
+
+      final createdItem = state.events.firstWhere(
+        (e) => e.id == createdEventId,
+        orElse: () => EventItem.fromSupabase(res, reqs: event.requirements),
+      );
+
+      return createdItem;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Add event error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
     }
   }
 
-  Future<void> approveCrew(String eventId, List<CrewMember> crew, int totalCost) async {
-    final updatedList = state.events.map((e) {
-      if (e.id == eventId) {
-        return e.copyWith(
-          status: EventStatus.crewConfirmed,
-          confirmedCrew: crew,
-          totalCostAllocated: totalCost,
-        );
-      }
-      return e;
-    }).toList();
-
-    state = state.copyWith(events: updatedList);
-
+  Future<bool> approveCrew(String eventId, List<CrewMember> crew, int totalCost) async {
     final client = SupabaseConfig.client;
-    if (client != null) {
-      try {
-        final membersPayload = crew.map((m) {
-          final validFreelancerId = (m.freelancerId.length == 36)
-              ? m.freelancerId
-              : '00000000-0000-0000-0000-000000000002';
+    if (client == null) {
+      throw Exception('Supabase client is not connected.');
+    }
 
-          return {
-            'freelancer_id': validFreelancerId,
-            'role': m.role,
-            'match_score': m.matchScore,
-            'reliability_score': m.reliabilityScore,
-            'allocated_cost': m.allocatedCost,
-            'rationale': m.rationale,
-          };
-        }).toList();
+    try {
+      final membersPayload = crew.map((m) {
+        final validFreelancerId = (m.freelancerId.length == 36 && m.freelancerId.contains('-'))
+            ? m.freelancerId
+            : '00000000-0000-0000-0000-000000000002';
 
-        final rpcRes = await client.rpc(
-          'approve_crew_transaction',
-          params: {
-            'p_event_id': eventId,
-            'p_total_cost': totalCost,
-            'p_members': membersPayload,
-          },
-        );
+        return {
+          'freelancer_id': validFreelancerId,
+          'role': m.role,
+          'match_score': m.matchScore,
+          'reliability_score': m.reliabilityScore,
+          'allocated_cost': m.allocatedCost,
+          'rationale': m.rationale,
+        };
+      }).toList();
 
-        debugPrint('[Supabase] Crew Approval Transaction Successful: $rpcRes');
-        await fetchEventsFromSupabase();
-      } catch (e) {
-        debugPrint('[Supabase] Crew approve transaction error: $e');
-      }
+      debugPrint('[Supabase WRITE] Approving crew for event $eventId (Cost: $totalCost)...');
+      final rpcRes = await client.rpc(
+        'approve_crew_transaction',
+        params: {
+          'p_event_id': eventId,
+          'p_total_cost': totalCost,
+          'p_members': membersPayload,
+        },
+      );
+
+      debugPrint('[Supabase WRITE SUCCESS] Crew Approval Transaction Successful: $rpcRes');
+      await fetchEventsFromSupabase();
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Crew approve transaction error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
     }
   }
 }

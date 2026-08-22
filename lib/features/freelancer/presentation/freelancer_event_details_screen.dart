@@ -233,19 +233,29 @@ class FreelancerEventDetailsScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final rate = int.tryParse(rateCtrl.text) ?? user.expectedRate;
-              ref.read(freelancerProvider.notifier).applyToEvent(
-                    evt.id,
-                    evt.name,
-                    user.id,
-                    selectedRole,
-                    rate,
-                  );
               Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Successfully applied to ${evt.name}!'), backgroundColor: AppColors.success),
-              );
+              try {
+                final res = await ref.read(freelancerProvider.notifier).applyToEvent(
+                      evt.id,
+                      evt.name,
+                      user.id,
+                      selectedRole,
+                      rate,
+                    );
+                if (res && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('✨ Successfully applied to ${evt.name}!'), backgroundColor: AppColors.success),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Application failed: $e'), backgroundColor: AppColors.danger),
+                  );
+                }
+              }
             },
             child: const Text('Confirm & Submit Application'),
           ),

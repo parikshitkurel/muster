@@ -19,6 +19,7 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
   late TextEditingController _cityCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _emailCtrl;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -190,12 +191,46 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Profile saved successfully!'), backgroundColor: AppColors.success),
-                            );
-                          },
-                          child: const Text('Save Profile Updates'),
+                          onPressed: _isSaving
+                              ? null
+                              : () async {
+                                  setState(() => _isSaving = true);
+                                  try {
+                                    final rate = int.tryParse(_rateCtrl.text) ?? 1500;
+                                    await ref.read(authProvider.notifier).updateFreelancerProfile(
+                                          fullName: _nameCtrl.text,
+                                          primaryRole: _roleCtrl.text,
+                                          hourlyRate: rate,
+                                          city: _cityCtrl.text,
+                                          phone: _phoneCtrl.text,
+                                          skills: user?.skills ?? const [],
+                                        );
+                                    if (!context.mounted) return;
+                                    setState(() => _isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('✨ Freelancer profile updated in Supabase database!'),
+                                        backgroundColor: AppColors.success,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    setState(() => _isSaving = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error saving profile: $e'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                  }
+                                },
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Save Profile Updates'),
                         ),
                       ),
                     ],

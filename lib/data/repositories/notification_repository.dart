@@ -89,7 +89,18 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     }
   }
 
-  void markAsRead(String id) {
+  Future<void> markAsRead(String id) async {
+    final client = SupabaseConfig.client;
+    if (client != null) {
+      try {
+        debugPrint('[Supabase WRITE] Marking notification $id as read...');
+        await client.from('notifications').update({'is_read': true}).eq('id', id);
+        debugPrint('[Supabase WRITE SUCCESS] Notification marked as read in database.');
+      } catch (e) {
+        debugPrint('[Supabase WRITE FAILED] Notification update error: $e');
+      }
+    }
+
     final updated = state.notifications.map((n) {
       if (n.id == id) {
         return n.copyWith(isRead: true);
@@ -97,25 +108,22 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
       return n;
     }).toList();
     state = state.copyWith(notifications: updated);
-
-    final client = SupabaseConfig.client;
-    if (client != null) {
-      try {
-        client.from('notifications').update({'is_read': true}).eq('id', id);
-      } catch (_) {}
-    }
   }
 
-  void markAllAsRead() {
-    final updated = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
-    state = state.copyWith(notifications: updated);
-
+  Future<void> markAllAsRead() async {
     final client = SupabaseConfig.client;
     if (client != null) {
       try {
-        client.from('notifications').update({'is_read': true}).neq('is_read', true);
-      } catch (_) {}
+        debugPrint('[Supabase WRITE] Marking all notifications as read...');
+        await client.from('notifications').update({'is_read': true}).neq('is_read', true);
+        debugPrint('[Supabase WRITE SUCCESS] All notifications marked as read in database.');
+      } catch (e) {
+        debugPrint('[Supabase WRITE FAILED] Mark all notifications error: $e');
+      }
     }
+
+    final updated = state.notifications.map((n) => n.copyWith(isRead: true)).toList();
+    state = state.copyWith(notifications: updated);
   }
 
   void addNotification(AppNotification notif) {

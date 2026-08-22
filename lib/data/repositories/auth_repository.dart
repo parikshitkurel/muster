@@ -223,6 +223,110 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return false;
   }
 
+  Future<bool> updateOrganizerProfile({
+    required String fullName,
+    required String companyName,
+    required String city,
+    required String phone,
+  }) async {
+    final client = SupabaseConfig.client;
+    final user = state.currentUser;
+    if (client == null || user == null) {
+      throw Exception('Not authenticated with Supabase');
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      debugPrint('[Supabase WRITE] Updating organizer profile for user ${user.id}...');
+      // 1. Update public.profiles
+      await client.from('profiles').update({
+        'full_name': fullName.trim(),
+        'phone': phone.trim(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', user.id);
+      debugPrint('[Supabase WRITE SUCCESS] Base profile updated.');
+
+      // 2. Upsert public.organizer_profiles
+      await client.from('organizer_profiles').upsert({
+        'id': user.id,
+        'company_name': companyName.trim(),
+        'city': city.trim(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      debugPrint('[Supabase WRITE SUCCESS] Organizer profile upserted.');
+
+      await _fetchAndSyncUserProfile(user.id, user.email);
+      debugPrint('[Supabase WRITE SUCCESS] State resynced for organizer ${user.fullName}.');
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Update organizer profile error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<bool> updateFreelancerProfile({
+    required String fullName,
+    required String primaryRole,
+    required int hourlyRate,
+    required String city,
+    required String phone,
+    required List<String> skills,
+  }) async {
+    final client = SupabaseConfig.client;
+    final user = state.currentUser;
+    if (client == null || user == null) {
+      throw Exception('Not authenticated with Supabase');
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      debugPrint('[Supabase WRITE] Updating freelancer profile for user ${user.id}...');
+      // 1. Update public.profiles
+      await client.from('profiles').update({
+        'full_name': fullName.trim(),
+        'phone': phone.trim(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', user.id);
+      debugPrint('[Supabase WRITE SUCCESS] Base profile updated.');
+
+      // 2. Upsert public.freelancer_profiles
+      await client.from('freelancer_profiles').upsert({
+        'id': user.id,
+        'primary_role': primaryRole.trim(),
+        'hourly_rate': hourlyRate,
+        'city': city.trim(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      debugPrint('[Supabase WRITE SUCCESS] Freelancer profile upserted.');
+
+      // 3. Update skills if provided
+      if (skills.isNotEmpty) {
+        await client.from('freelancer_skills').delete().eq('freelancer_id', user.id);
+        final skillsPayload = skills
+            .where((s) => s.trim().isNotEmpty)
+            .map((s) => {'freelancer_id': user.id, 'skill_name': s.trim()})
+            .toList();
+        if (skillsPayload.isNotEmpty) {
+          await client.from('freelancer_skills').insert(skillsPayload);
+        }
+        debugPrint('[Supabase WRITE SUCCESS] Freelancer skills updated.');
+      }
+
+      await _fetchAndSyncUserProfile(user.id, user.email);
+      debugPrint('[Supabase WRITE SUCCESS] State resynced for freelancer ${user.fullName}.');
+      return true;
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE FAILED] Update freelancer profile error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     final client = SupabaseConfig.client;
     if (client != null) {

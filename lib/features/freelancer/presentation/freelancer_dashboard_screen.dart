@@ -214,21 +214,32 @@ class FreelancerDashboardScreen extends ConsumerWidget {
                                               ),
                                               onPressed: alreadyApplied
                                                   ? null
-                                                  : () {
-                                                      final res = ref.read(freelancerProvider.notifier).applyToEvent(
-                                                            evt.id,
-                                                            evt.name,
-                                                            user.id,
-                                                            user.primaryRole,
-                                                            user.expectedRate,
+                                                  : () async {
+                                                      try {
+                                                        final res = await ref.read(freelancerProvider.notifier).applyToEvent(
+                                                              evt.id,
+                                                              evt.name,
+                                                              user.id,
+                                                              user.primaryRole,
+                                                              user.expectedRate,
+                                                            );
+                                                        if (res && context.mounted) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(
+                                                              content: Text('✨ Successfully applied to ${evt.name}!'),
+                                                              backgroundColor: AppColors.success,
+                                                            ),
                                                           );
-                                                      if (res) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(
-                                                            content: Text('Successfully applied to ${evt.name}!'),
-                                                            backgroundColor: AppColors.success,
-                                                          ),
-                                                        );
+                                                        }
+                                                      } catch (e) {
+                                                        if (context.mounted) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(
+                                                              content: Text('Application failed: $e'),
+                                                              backgroundColor: AppColors.danger,
+                                                            ),
+                                                          );
+                                                        }
                                                       }
                                                     },
                                               child: Row(

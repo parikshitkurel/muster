@@ -148,8 +148,7 @@ class EventItem {
     if (status == EventStatus.inProgress) statusStr = 'in_progress';
     if (status == EventStatus.completed) statusStr = 'completed';
 
-    return {
-      'id': id,
+    final payload = <String, dynamic>{
       'organizer_id': organizerId,
       'name': name,
       'type': type,
@@ -161,5 +160,11 @@ class EventItem {
       'status': statusStr,
       'description': description,
     };
+
+    if (id.length == 36 && id.contains('-')) {
+      payload['id'] = id;
+    }
+
+    return payload;
   }
 }

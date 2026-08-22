@@ -92,7 +92,7 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
       if (recRes['id'] != null) {
         final recId = recRes['id'] as String;
         final membersPayload = result.recommendedCrew.map((m) {
-          final validFreelancerId = (m.freelancerId.length == 36)
+          final validFreelancerId = (m.freelancerId.length == 36 && m.freelancerId.contains('-'))
               ? m.freelancerId
               : '00000000-0000-0000-0000-000000000002';
 
@@ -108,10 +108,11 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
         }).toList();
 
         await client.from('recommendation_members').insert(membersPayload);
-        debugPrint('[Supabase] Persisted Recommendation #${permutationIndex + 1}');
+        debugPrint('[Supabase WRITE SUCCESS] Persisted Recommendation #$permutationIndex ($recId) with ${membersPayload.length} members.');
       }
-    } catch (e) {
-      debugPrint('Notice: Recommendation persisted locally (Supabase message: $e)');
+    } catch (e, stackTrace) {
+      debugPrint('[Supabase WRITE NOTICE] Recommendation persistence error: $e');
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 }
