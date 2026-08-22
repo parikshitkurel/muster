@@ -9,7 +9,6 @@ class FreelancerSettingsScreen extends StatefulWidget {
 }
 
 class _FreelancerSettingsScreenState extends State<FreelancerSettingsScreen> {
-  bool _instantDispatchSms = true;
   bool _proximityAlerts = true;
 
   @override
@@ -31,7 +30,7 @@ class _FreelancerSettingsScreenState extends State<FreelancerSettingsScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Configure job matching notifications, SMS dispatch alerts, and privacy settings.',
+                'Configure job matching notifications and dispatch alert preferences.',
                 style: TextStyle(fontSize: 13, color: AppColors.textMuted),
               ),
               const SizedBox(height: 24),
@@ -44,13 +43,6 @@ class _FreelancerSettingsScreenState extends State<FreelancerSettingsScreen> {
                     children: [
                       const Text('Dispatch Notifications', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                       const Divider(color: AppColors.border, height: 24),
-                      SwitchListTile(
-                        title: const Text('Instant SMS Dispatch Notifications', style: TextStyle(fontSize: 14)),
-                        subtitle: const Text('Direct SMS when selected by an organizer optimization run', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                        value: _instantDispatchSms,
-                        activeThumbColor: AppColors.primary,
-                        onChanged: (v) => setState(() => _instantDispatchSms = v),
-                      ),
                       SwitchListTile(
                         title: const Text('Proximity Event Alerts', style: TextStyle(fontSize: 14)),
                         subtitle: const Text('Push alerts when new events within 25km are published', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),

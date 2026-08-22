@@ -10,7 +10,6 @@ class OrganizerSettingsScreen extends StatefulWidget {
 
 class _OrganizerSettingsScreenState extends State<OrganizerSettingsScreen> {
   bool _emailAlerts = true;
-  bool _instantSms = true;
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +49,6 @@ class _OrganizerSettingsScreenState extends State<OrganizerSettingsScreen> {
                         value: _emailAlerts,
                         activeThumbColor: AppColors.primary,
                         onChanged: (v) => setState(() => _emailAlerts = v),
-                      ),
-                      SwitchListTile(
-                        title: const Text('Instant SMS Shift Alerts', style: TextStyle(fontSize: 14)),
-                        subtitle: const Text('Direct SMS dispatch updates for day-of-event check-ins', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                        value: _instantSms,
-                        activeThumbColor: AppColors.primary,
-                        onChanged: (v) => setState(() => _instantSms = v),
                       ),
                     ],
                   ),
