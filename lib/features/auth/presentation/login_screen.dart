@@ -15,8 +15,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController(text: 'organizer@muster.events');
-  final _passwordCtrl = TextEditingController(text: 'password123');
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   UserRole _selectedRole = UserRole.organizer;
   bool _isPasswordVisible = false;
 
@@ -141,7 +141,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: InkWell(
                                 onTap: () => setState(() {
                                   _selectedRole = UserRole.organizer;
-                                  _emailCtrl.text = 'organizer@muster.events';
                                 }),
                                 borderRadius: BorderRadius.circular(6),
                                 child: Container(
@@ -187,7 +186,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: InkWell(
                                 onTap: () => setState(() {
                                   _selectedRole = UserRole.freelancer;
-                                  _emailCtrl.text = 'rohan.mehta@muster.events';
                                 }),
                                 borderRadius: BorderRadius.circular(6),
                                 child: Container(
