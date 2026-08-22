@@ -183,6 +183,23 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
 
       debugPrint('[Supabase WRITE SUCCESS] Application created with ID: ${insertRes['id']}');
 
+      final newApp = FreelancerApplication(
+        id: insertRes['id'] as String,
+        eventId: eventId,
+        eventName: eventName,
+        freelancerId: validFreelancerId,
+        appliedRole: role,
+        proposedRate: rate,
+        status: ApplicationStatus.pending,
+        appliedDate: 'Just now',
+      );
+
+      final updatedList = [
+        ...state.myApplications.where((a) => a.eventId != eventId),
+        newApp,
+      ];
+      state = state.copyWith(myApplications: updatedList, isLoading: false);
+
       // Auto-create notification for organizer
       try {
         final evtRes = await client.from('events').select('organizer_id, name').eq('id', eventId).maybeSingle();
@@ -201,7 +218,7 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
         debugPrint('[Supabase] Non-critical notification write error: $notifErr');
       }
 
-      await fetchApplicationsFromSupabase();
+      await fetchApplicationsFromSupabase(userId: validFreelancerId);
       return true;
     } catch (e, stackTrace) {
       debugPrint('[Supabase WRITE FAILED] Application persist error: $e');

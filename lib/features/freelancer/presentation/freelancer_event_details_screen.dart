@@ -82,10 +82,18 @@ class FreelancerEventDetailsScreen extends ConsumerWidget {
 
                   if (myApp != null)
                     ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.bgContainer, foregroundColor: AppColors.textMuted),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.successBg,
+                        foregroundColor: AppColors.success,
+                        side: const BorderSide(color: AppColors.success),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
                       onPressed: null,
-                      icon: const Icon(LucideIcons.check, size: 14),
-                      label: Text('Applied (${myApp.status.displayName})'),
+                      icon: const Icon(LucideIcons.checkCheck, size: 16, color: AppColors.success),
+                      label: Text(
+                        '✓ Application Submitted (${myApp.status.displayName})',
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.success),
+                      ),
                     )
                   else
                     ElevatedButton.icon(

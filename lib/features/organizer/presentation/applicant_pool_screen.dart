@@ -41,33 +41,60 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
       return;
     }
     try {
-      final res = await client.from('applications').select('''
-        id,
-        event_id,
-        freelancer_id,
-        applied_role,
-        proposed_rate,
-        status,
-        profiles:freelancer_id (full_name, email, phone),
-        freelancer_profiles:freelancer_id (primary_role, hourly_rate, city)
-      ''').eq('event_id', widget.eventId);
+      final appRes = await client
+          .from('applications')
+          .select('*')
+          .eq('event_id', widget.eventId);
+
+      final appList = appRes as List;
+      if (appList.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _eventCandidates = [];
+            _isLoadingApps = false;
+          });
+        }
+        return;
+      }
+
+      final freelancerIds = appList.map((a) => a['freelancer_id'] as String).toSet().toList();
+
+      final profilesRes = await client
+          .from('profiles')
+          .select('id, full_name, email, phone')
+          .inFilter('id', freelancerIds);
+
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (var p in (profilesRes as List)) {
+        profilesMap[p['id'] as String] = p;
+      }
+
+      final fProfilesRes = await client
+          .from('freelancer_profiles')
+          .select('id, primary_role, hourly_rate, city')
+          .inFilter('id', freelancerIds);
+
+      final fProfilesMap = <String, Map<String, dynamic>>{};
+      for (var fp in (fProfilesRes as List)) {
+        fProfilesMap[fp['id'] as String] = fp;
+      }
 
       final List<FreelancerCandidate> list = [];
+      for (var row in appList) {
+        final fId = row['freelancer_id'] as String;
+        final pMap = profilesMap[fId] ?? {};
+        final fpMap = fProfilesMap[fId] ?? {};
 
-      for (var row in (res as List)) {
-        final profileMap = row['profiles'] as Map<String, dynamic>? ?? {};
-        final freelancerProfileMap = row['freelancer_profiles'] as Map<String, dynamic>? ?? {};
+        final name = pMap['full_name'] as String? ?? 'Freelancer Specialist';
+        final role = row['applied_role'] as String? ?? fpMap['primary_role'] as String? ?? 'Event Specialist';
+        final rate = (row['proposed_rate'] as num?)?.toInt() ?? (fpMap['hourly_rate'] as num?)?.toInt() ?? 1500;
 
-        final name = profileMap['full_name'] as String? ?? 'Freelancer Specialist';
-        final role = row['applied_role'] as String? ?? freelancerProfileMap['primary_role'] as String? ?? 'Event Specialist';
-        final rate = (row['proposed_rate'] as num?)?.toInt() ?? (freelancerProfileMap['hourly_rate'] as num?)?.toInt() ?? 1500;
-
-        final phone = profileMap['phone'] as String? ?? '+91 98765 43210';
-        final email = profileMap['email'] as String? ?? 'talent@muster.events';
+        final phone = pMap['phone'] as String? ?? '+91 98765 43210';
+        final email = pMap['email'] as String? ?? 'talent@muster.events';
 
         list.add(
           FreelancerCandidate(
-            id: row['freelancer_id'] as String,
+            id: fId,
             name: name,
             role: role,
             expectedRate: rate,

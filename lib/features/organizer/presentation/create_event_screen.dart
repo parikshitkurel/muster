@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../core/services/gemini_service.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../models/user.dart';
 import '../../../models/event.dart';
@@ -275,115 +274,6 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     );
   }
 
-  void _showNlpPromptDialog() {
-    final promptCtrl = TextEditingController(
-      text: 'Need 2 Sound Engineers and 1 Lighting Specialist for a 2-day conference in Bengaluru with a budget of ₹1,40,000.',
-    );
-    bool isLoading = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: AppColors.bgSurface,
-          title: const Row(
-            children: [
-              Icon(LucideIcons.sparkles, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
-              Text('Gemini NLP Event Brief Assistant', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Enter natural language description of your event requirements. Gemini will extract structured quotas, rate caps, and budget limits.',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: promptCtrl,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Need 2 audio technicians and 1 stage manager in Mumbai under 2 lakhs...',
-                ),
-              ),
-              if (isLoading) ...[
-                const SizedBox(height: 16),
-                const Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 8),
-                      Text('Gemini parsing structured requirements...', style: TextStyle(fontSize: 12, color: AppColors.primary)),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      setDlgState(() => isLoading = true);
-                      final parsed = await GeminiService.parseRequirements(promptCtrl.text);
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                      }
-                      if (!mounted) return;
-                      if (parsed != null) {
-                        setState(() {
-                          if (parsed['suggested_name'] != null) _nameCtrl.text = parsed['suggested_name'];
-                          if (parsed['suggested_city'] != null) _cityCtrl.text = parsed['suggested_city'];
-                          if (parsed['estimated_budget'] != null) {
-                            _budgetCtrl.text = parsed['estimated_budget'].toString();
-                          }
-                          if (parsed['category'] != null) _eventType = parsed['category'];
-                          if (parsed['description'] != null) _descCtrl.text = parsed['description'];
-                          final roles = parsed['roles'] as List?;
-                          if (roles != null && roles.isNotEmpty) {
-                            _requirements.clear();
-                            for (var r in roles) {
-                              _requirements.add(
-                                EventRequirement(
-                                  role: r['role_name'] ?? 'Event Crew',
-                                  quantity: r['quantity'] ?? 1,
-                                  maxRatePerHour: r['max_rate_per_hour'] ?? 1500,
-                                  minExperienceYears: r['min_experience_years'] ?? 2,
-                                  requiredSkills: ['Event Operations'],
-                                ),
-                              );
-                            }
-                          }
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('✨ Event requirements auto-filled by Gemini AI!'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Notice: Using default structured parameters.')),
-                        );
-                      }
-                    },
-              child: const Text('Extract & Fill'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveLayout.isMobile(context);
@@ -600,36 +490,6 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.primaryDark,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.primaryLight),
-          ),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.sparkles, color: Colors.white, size: 18),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Gemini NLP Assist: Type natural requirements or brief to auto-extract role quotas and budget parameters.',
-                  style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600),
-                ),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primaryDark,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                ),
-                onPressed: () => _showNlpPromptDialog(),
-                child: const Text('Use AI Brief Assist', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
         const Text('Event Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         const SizedBox(height: 16),
         TextFormField(
