@@ -106,17 +106,38 @@ class OptimizationResult {
 }
 
 class CrewAllocation {
+  final String id;
   final String eventId;
   final String eventName;
+  final String crewType;
+  final int totalMembers;
   final List<CrewMember> members;
   final int totalCost;
   final String confirmedDate;
 
   CrewAllocation({
+    required this.id,
     required this.eventId,
     required this.eventName,
+    this.crewType = 'Production Crew',
+    required this.totalMembers,
     required this.members,
     required this.totalCost,
     required this.confirmedDate,
   });
+
+  factory CrewAllocation.fromSupabase(Map<String, dynamic> map, {required String eventName, List<CrewMember>? membersList}) {
+    return CrewAllocation(
+      id: map['id'] as String,
+      eventId: map['event_id'] as String,
+      eventName: eventName,
+      crewType: map['crew_type'] as String? ?? 'Production Crew',
+      totalMembers: (map['total_members'] as num?)?.toInt() ?? (membersList?.length ?? 1),
+      members: membersList ?? const [],
+      totalCost: (map['total_cost'] as num?)?.toInt() ?? 0,
+      confirmedDate: map['confirmed_date'] != null
+          ? (map['confirmed_date'] as String).substring(0, 10)
+          : DateTime.now().toString().substring(0, 10),
+    );
+  }
 }

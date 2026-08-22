@@ -82,11 +82,21 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
     }
 
     try {
-      final candidatesRes = await client.from('freelancer_profiles').select('''
-        *,
-        profiles:id (full_name, email, phone, avatar_url),
-        freelancer_skills (skill_name)
-      ''');
+      dynamic candidatesRes;
+      try {
+        candidatesRes = await client.from('freelancer_profiles').select('''
+          *,
+          profiles!freelancer_profiles_id_fkey (full_name, email, phone, avatar_url),
+          freelancer_skills (skill_name)
+        ''');
+      } catch (ambiguousErr) {
+        debugPrint('[Supabase] Explicit FK join notice: $ambiguousErr. Trying standard fallback...');
+        candidatesRes = await client.from('freelancer_profiles').select('''
+          *,
+          profiles (full_name, email, phone, avatar_url),
+          freelancer_skills (skill_name)
+        ''');
+      }
 
       final List<FreelancerCandidate> list = [];
       for (var cMap in (candidatesRes as List)) {
@@ -109,11 +119,17 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
     }
 
     try {
-      final appRes = await client.from('applications').select('''
+      final currentUser = client.auth.currentUser;
+      var query = client.from('applications').select('''
         *,
         events:event_id (name)
       ''');
 
+      if (currentUser != null) {
+        query = query.eq('freelancer_id', currentUser.id);
+      }
+
+      final appRes = await query;
       final list = (appRes as List)
           .map((a) => FreelancerApplication.fromSupabase(a))
           .toList();

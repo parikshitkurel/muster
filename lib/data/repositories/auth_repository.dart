@@ -169,7 +169,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
           },
         );
         if (res.user != null) {
-          await _fetchAndSyncUserProfile(res.user!.id, email);
+          final userId = res.user!.id;
+          debugPrint('[Supabase WRITE] Creating base profile and organizer profile for $userId...');
+          await client.from('profiles').upsert({
+            'id': userId,
+            'email': email,
+            'full_name': fullName,
+            'role': 'organizer',
+          });
+          await client.from('organizer_profiles').upsert({
+            'id': userId,
+            'company_name': companyName,
+            'city': city,
+          });
+          debugPrint('[Supabase WRITE SUCCESS] Organizer registration profile created.');
+          await _fetchAndSyncUserProfile(userId, email);
           return true;
         }
       } catch (e) {
@@ -209,7 +223,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
           },
         );
         if (res.user != null) {
-          await _fetchAndSyncUserProfile(res.user!.id, email);
+          final userId = res.user!.id;
+          debugPrint('[Supabase WRITE] Creating base profile, freelancer profile, and skills for $userId...');
+          await client.from('profiles').upsert({
+            'id': userId,
+            'email': email,
+            'full_name': fullName,
+            'role': 'freelancer',
+          });
+          await client.from('freelancer_profiles').upsert({
+            'id': userId,
+            'primary_role': primaryRole,
+            'hourly_rate': expectedRate,
+            'city': city,
+          });
+          if (skills.isNotEmpty) {
+            await client.from('freelancer_skills').delete().eq('freelancer_id', userId);
+            final skillRows = skills.map((s) => {'freelancer_id': userId, 'skill_name': s}).toList();
+            await client.from('freelancer_skills').insert(skillRows);
+          }
+          debugPrint('[Supabase WRITE SUCCESS] Freelancer registration profile created.');
+          await _fetchAndSyncUserProfile(userId, email);
           return true;
         }
       } catch (e) {

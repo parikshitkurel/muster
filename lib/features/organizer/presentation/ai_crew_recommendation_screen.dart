@@ -178,6 +178,8 @@ class _AICrewRecommendationScreenState
                                         evt.id,
                                         result.recommendedCrew,
                                         result.totalCost,
+                                        crewType: result.optionTitle,
+                                        totalMembers: result.recommendedCrew.length,
                                       );
                                   if (context.mounted) {
                                     context.go('/organizer/final-crew/${evt.id}');

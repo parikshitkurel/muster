@@ -197,7 +197,13 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
                                   )
                                   .toList();
                               try {
-                                await ref.read(eventsProvider.notifier).approveCrew(evt.id, crew, manualCost);
+                                await ref.read(eventsProvider.notifier).approveCrew(
+                                      evt.id,
+                                      crew,
+                                      manualCost,
+                                      crewType: 'Manual Organizer Selection',
+                                      totalMembers: crew.length,
+                                    );
                                 if (context.mounted) {
                                   context.go('/organizer/final-crew/${evt.id}');
                                 }

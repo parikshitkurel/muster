@@ -112,6 +112,13 @@ class EventNotifier extends StateNotifier<EventState> {
           }
         }
 
+        final appCountRes = await client
+            .from('applications')
+            .select('id')
+            .eq('event_id', evtMap['id']);
+        final realAppCount = (appCountRes as List).length;
+        evtMap['applicant_count'] = realAppCount;
+
         fetchedEvents.add(EventItem.fromSupabase(evtMap, reqs: reqs, crew: confirmedCrew));
       }
 
@@ -176,7 +183,13 @@ class EventNotifier extends StateNotifier<EventState> {
     }
   }
 
-  Future<bool> approveCrew(String eventId, List<CrewMember> crew, int totalCost) async {
+  Future<bool> approveCrew(
+    String eventId,
+    List<CrewMember> crew,
+    int totalCost, {
+    String crewType = 'Production Crew',
+    int? totalMembers,
+  }) async {
     final client = SupabaseConfig.client;
     if (client == null) {
       throw Exception('Supabase client is not connected.');
@@ -198,13 +211,16 @@ class EventNotifier extends StateNotifier<EventState> {
         };
       }).toList();
 
-      debugPrint('[Supabase WRITE] Approving crew for event $eventId (Cost: $totalCost)...');
+      final membersCount = totalMembers ?? (crew.isEmpty ? 1 : crew.length);
+      debugPrint('[Supabase WRITE] Approving crew type "$crewType" ($membersCount members) for event $eventId (Cost: $totalCost)...');
       final rpcRes = await client.rpc(
         'approve_crew_transaction',
         params: {
           'p_event_id': eventId,
           'p_total_cost': totalCost,
           'p_members': membersPayload,
+          'p_crew_type': crewType,
+          'p_total_members': membersCount,
         },
       );
 

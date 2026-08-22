@@ -566,7 +566,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
       case 3:
         return _buildStep3Budget();
       case 4:
-        return _buildStep4MatchingPreferences();
+        return _buildStep4Weights();
       case 5:
         return _buildStep5Review();
       default:
@@ -907,29 +907,48 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     );
   }
 
-  Widget _buildStep4MatchingPreferences() {
+  double _skillWeight = 0.40;
+  double _reliabilityWeight = 0.35;
+  double _proximityWeight = 0.15;
+  double _rateWeight = 0.10;
+
+  Widget _buildStep4Weights() {
+    final totalSum = (_skillWeight + _reliabilityWeight + _proximityWeight + _rateWeight) * 100;
+    final totalPercentage = totalSum.round();
+    final isValidSum = totalPercentage == 100;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Optimization Objective Priorities', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Optimization Objective Weights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            Chip(
+              label: Text('Total Weight: $totalPercentage%', style: TextStyle(color: isValidSum ? Colors.white : Colors.amber.shade900, fontWeight: FontWeight.w800, fontSize: 11)),
+              backgroundColor: isValidSum ? AppColors.success : AppColors.bgSurfaceSubtle,
+              side: BorderSide(color: isValidSum ? AppColors.success : AppColors.border),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         const Text(
           'Tune the CP-SAT solver cost function weights for candidate selection.',
           style: TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
         const SizedBox(height: 20),
-        _buildWeightSlider('Skill & Experience Match Weight', 0.40),
+        _buildWeightSlider('Skill & Experience Match Weight', _skillWeight, (v) => setState(() => _skillWeight = v)),
         const SizedBox(height: 14),
-        _buildWeightSlider('Reliability Score & Past Attendance', 0.35),
+        _buildWeightSlider('Reliability Score & Past Attendance', _reliabilityWeight, (v) => setState(() => _reliabilityWeight = v)),
         const SizedBox(height: 14),
-        _buildWeightSlider('Proximity & Travel Distance', 0.15),
+        _buildWeightSlider('Proximity & Travel Distance', _proximityWeight, (v) => setState(() => _proximityWeight = v)),
         const SizedBox(height: 14),
-        _buildWeightSlider('Hourly Rate Budget Efficiency', 0.10),
+        _buildWeightSlider('Hourly Rate Budget Efficiency', _rateWeight, (v) => setState(() => _rateWeight = v)),
       ],
     );
   }
 
-  Widget _buildWeightSlider(String label, double defaultVal) {
+  Widget _buildWeightSlider(String label, double currentVal, ValueChanged<double> onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -937,15 +956,16 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-            Text('${(defaultVal * 100).round()}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+            Text('${(currentVal * 100).round()}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
           ],
         ),
         Slider(
-          value: defaultVal,
-          min: 0,
-          max: 1,
+          value: currentVal.clamp(0.0, 1.0),
+          min: 0.0,
+          max: 1.0,
+          divisions: 100,
           activeColor: AppColors.primary,
-          onChanged: (_) {},
+          onChanged: onChanged,
         ),
       ],
     );
