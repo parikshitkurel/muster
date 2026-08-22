@@ -110,55 +110,59 @@ class _AICrewRecommendationScreenState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(LucideIcons.sparkles, size: 12, color: AppColors.primaryDark),
-                            SizedBox(width: 4),
-                            Text(
-                              'GEMINI 1.5 + CP-SAT SOLVER',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryDark,
-                                fontFamily: 'monospace',
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.sparkles, size: 12, color: AppColors.primaryDark),
+                              SizedBox(width: 4),
+                              Text(
+                                'GEMINI 1.5 + CP-SAT SOLVER',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryDark,
+                                  fontFamily: 'monospace',
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        result.optionTitle,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${result.optionStrategy} • ${evt.name}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          result.optionTitle,
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${result.optionStrategy} • ${evt.name}',
+                          style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
                   ),
-
-                  Row(
+                  const SizedBox(width: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
                     children: [
                       OutlinedButton.icon(
                         onPressed: () => context.go('/organizer/applicants/${evt.id}'),
                         icon: const Icon(LucideIcons.pencil, size: 14),
                         label: const Text('Choose Manually'),
                       ),
-                      const SizedBox(width: 8),
                       OutlinedButton.icon(
                         onPressed: () {
                           setState(() {
@@ -168,7 +172,6 @@ class _AICrewRecommendationScreenState
                         icon: const Icon(LucideIcons.refreshCw, size: 14),
                         label: const Text('Find Another Crew'),
                       ),
-                      const SizedBox(width: 8),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
                         onPressed: result.isValidBudget
