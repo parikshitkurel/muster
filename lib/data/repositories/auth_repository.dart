@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user.dart';
 import '../../core/supabase/supabase_config.dart';
-import '../mock/mock_data.dart';
 
 class AuthState {
   final AppUser? currentUser;
@@ -25,8 +24,9 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(AuthState(currentUser: MockData.organizerUser)) {
+  AuthNotifier() : super(AuthState(currentUser: null)) {
     _initSupabaseListener();
+    _checkCurrentSession();
   }
 
   void _initSupabaseListener() {
@@ -37,8 +37,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final session = data.session;
       if (session != null) {
         await _fetchAndSyncUserProfile(session.user.id, session.user.email ?? '');
+      } else {
+        state = AuthState(currentUser: null);
       }
     });
+  }
+
+  Future<void> _checkCurrentSession() async {
+    final client = SupabaseConfig.client;
+    if (client == null) return;
+
+    final session = client.auth.currentSession;
+    if (session != null) {
+      await _fetchAndSyncUserProfile(session.user.id, session.user.email ?? '');
+    }
   }
 
   Future<void> _fetchAndSyncUserProfile(String userId, String email) async {
@@ -61,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
 
         final appUser = AppUser.fromSupabase(profileRes, roleMap: roleProfile, skillsList: skillsList);
-        state = state.copyWith(currentUser: appUser, isLoading: false);
+        state = state.copyWith(currentUser: appUser, isLoading: false, error: null);
       }
     } catch (e) {
       debugPrint('[Auth] Profile sync error: $e');
@@ -80,39 +92,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
           return true;
         }
       } catch (e) {
-        debugPrint('[Auth] Supabase signIn error: $e. Falling back to local authentication.');
+        debugPrint('[Auth] Supabase signIn error: $e');
+        state = state.copyWith(
+          isLoading: false,
+          error: e.toString().contains('Invalid login credentials')
+              ? 'Invalid email or password. Please verify test accounts in SEED_TEST_ACCOUNTS.sql.'
+              : e.toString(),
+        );
+        return false;
       }
     }
 
-    // Local fallback for offline/demo reliability
-    await Future.delayed(const Duration(milliseconds: 300));
-    AppUser demoUser;
-
-    if (email == 'organizer02@muster.test') {
-      demoUser = MockData.organizer02User;
-    } else if (email.startsWith('freelancer') || role == UserRole.freelancer) {
-      final cand = MockData.allCandidates.firstWhere(
-        (c) => c.email == email,
-        orElse: () => MockData.allCandidates.first,
-      );
-      demoUser = AppUser(
-        id: cand.id,
-        email: cand.email,
-        fullName: cand.name,
-        role: UserRole.freelancer,
-        primaryRole: cand.role,
-        expectedRate: cand.expectedRate,
-        experienceYears: cand.experienceYears,
-        reliabilityScore: cand.reliabilityScore,
-        freelancerCity: 'Indore, Madhya Pradesh',
-        skills: cand.skills,
-      );
-    } else {
-      demoUser = MockData.organizerUser;
-    }
-
-    state = state.copyWith(currentUser: demoUser, isLoading: false);
-    return true;
+    state = state.copyWith(
+      isLoading: false,
+      error: 'Supabase client is not connected.',
+    );
+    return false;
   }
 
   Future<bool> signUpOrganizer({
@@ -138,32 +133,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
           },
         );
         if (res.user != null) {
-          final newUser = AppUser(
-            id: res.user!.id,
-            email: email,
-            fullName: fullName,
-            role: UserRole.organizer,
-            companyName: companyName,
-            organizerCity: city,
-          );
-          state = state.copyWith(currentUser: newUser, isLoading: false);
+          await _fetchAndSyncUserProfile(res.user!.id, email);
           return true;
         }
       } catch (e) {
-        debugPrint('[Auth] Supabase signUpOrganizer message: $e');
+        debugPrint('[Auth] Supabase signUpOrganizer error: $e');
+        state = state.copyWith(isLoading: false, error: e.toString());
+        return false;
       }
     }
 
-    final newUser = AppUser(
-      id: 'org_${DateTime.now().millisecondsSinceEpoch}',
-      email: email,
-      fullName: fullName,
-      role: UserRole.organizer,
-      companyName: companyName,
-      organizerCity: city,
-    );
-    state = state.copyWith(currentUser: newUser, isLoading: false);
-    return true;
+    state = state.copyWith(isLoading: false, error: 'Supabase client is not initialized.');
+    return false;
   }
 
   Future<bool> signUpFreelancer({
@@ -192,44 +173,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
           },
         );
         if (res.user != null) {
-          final newUser = AppUser(
-            id: res.user!.id,
-            email: email,
-            fullName: fullName,
-            role: UserRole.freelancer,
-            primaryRole: primaryRole,
-            expectedRate: expectedRate,
-            freelancerCity: city,
-            skills: skills,
-          );
-          state = state.copyWith(currentUser: newUser, isLoading: false);
+          await _fetchAndSyncUserProfile(res.user!.id, email);
           return true;
         }
       } catch (e) {
-        debugPrint('[Auth] Supabase signUpFreelancer message: $e');
+        debugPrint('[Auth] Supabase signUpFreelancer error: $e');
+        state = state.copyWith(isLoading: false, error: e.toString());
+        return false;
       }
     }
 
-    final newUser = AppUser(
-      id: 'free_${DateTime.now().millisecondsSinceEpoch}',
-      email: email,
-      fullName: fullName,
-      role: UserRole.freelancer,
-      primaryRole: primaryRole,
-      expectedRate: expectedRate,
-      freelancerCity: city,
-      skills: skills,
-    );
-    state = state.copyWith(currentUser: newUser, isLoading: false);
-    return true;
-  }
-
-  void switchRole(UserRole newRole) {
-    if (newRole == UserRole.organizer) {
-      state = state.copyWith(currentUser: MockData.organizerUser);
-    } else {
-      state = state.copyWith(currentUser: MockData.freelancerUser);
-    }
+    state = state.copyWith(isLoading: false, error: 'Supabase client is not initialized.');
+    return false;
   }
 
   Future<void> logout() async {

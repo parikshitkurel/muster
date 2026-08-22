@@ -17,7 +17,12 @@ class ApplicationStatusScreen extends ConsumerWidget {
     final user = authState.currentUser;
     final apps = freelancerState.myApplications;
 
-    if (user == null) return const SizedBox.shrink();
+    if (user == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     final confirmedApps = apps.where((a) => a.status == ApplicationStatus.selected).toList();
 

@@ -147,7 +147,7 @@ class MusterApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'MUSTER — AI Crew Assembly',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       routerConfig: _router,
     );
   }

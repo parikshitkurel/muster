@@ -4,14 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/event.dart';
 import '../../models/crew.dart';
 import '../../core/supabase/supabase_config.dart';
-import '../mock/mock_data.dart';
 
 class EventState {
   final List<EventItem> events;
   final bool isLoading;
   final String? error;
 
-  EventState({required this.events, this.isLoading = false, this.error});
+  EventState({this.events = const [], this.isLoading = false, this.error});
 
   EventState copyWith({
     List<EventItem>? events,
@@ -29,7 +28,7 @@ class EventState {
 class EventNotifier extends StateNotifier<EventState> {
   RealtimeChannel? _realtimeChannel;
 
-  EventNotifier() : super(EventState(events: MockData.initialEvents)) {
+  EventNotifier() : super(EventState(events: const [], isLoading: true)) {
     fetchEventsFromSupabase();
     _subscribeToRealtimeEvents();
   }
@@ -63,7 +62,12 @@ class EventNotifier extends StateNotifier<EventState> {
 
   Future<void> fetchEventsFromSupabase() async {
     final client = SupabaseConfig.client;
-    if (client == null) return;
+    if (client == null) {
+      state = state.copyWith(events: const [], isLoading: false);
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
 
     try {
       final eventsData = await client.from('events').select('''
@@ -76,46 +80,45 @@ class EventNotifier extends StateNotifier<EventState> {
         )
       ''').order('created_at', ascending: false);
 
-      if (eventsData.isNotEmpty) {
-        final List<EventItem> fetchedEvents = [];
+      final List<EventItem> fetchedEvents = [];
 
-        for (var evtMap in eventsData) {
-          final rolesList = evtMap['event_roles'] as List? ?? [];
-          final reqs = rolesList.map((r) => EventRequirement.fromSupabase(r)).toList();
+      for (var evtMap in (eventsData as List)) {
+        final rolesList = evtMap['event_roles'] as List? ?? [];
+        final reqs = rolesList.map((r) => EventRequirement.fromSupabase(r)).toList();
 
-          List<CrewMember> confirmedCrew = [];
-          if (evtMap['status'] == 'crew_confirmed') {
-            final crewRes = await client
-                .from('crews')
-                .select('''
-                  id,
-                  crew_members (
-                    freelancer_id,
-                    role,
-                    match_score,
-                    reliability_score,
-                    allocated_cost,
-                    rationale,
-                    profiles:freelancer_id (full_name, phone, email)
-                  )
-                ''')
-                .eq('event_id', evtMap['id'])
-                .maybeSingle();
+        List<CrewMember> confirmedCrew = [];
+        if (evtMap['status'] == 'crew_confirmed') {
+          final crewRes = await client
+              .from('crews')
+              .select('''
+                id,
+                crew_members (
+                  freelancer_id,
+                  role,
+                  match_score,
+                  reliability_score,
+                  allocated_cost,
+                  rationale,
+                  profiles:freelancer_id (full_name, phone, email)
+                )
+              ''')
+              .eq('event_id', evtMap['id'])
+              .maybeSingle();
 
-            if (crewRes != null && crewRes['crew_members'] is List) {
-              confirmedCrew = (crewRes['crew_members'] as List)
-                  .map((m) => CrewMember.fromSupabase(m))
-                  .toList();
-            }
+          if (crewRes != null && crewRes['crew_members'] is List) {
+            confirmedCrew = (crewRes['crew_members'] as List)
+                .map((m) => CrewMember.fromSupabase(m))
+                .toList();
           }
-
-          fetchedEvents.add(EventItem.fromSupabase(evtMap, reqs: reqs, crew: confirmedCrew));
         }
 
-        state = state.copyWith(events: fetchedEvents);
+        fetchedEvents.add(EventItem.fromSupabase(evtMap, reqs: reqs, crew: confirmedCrew));
       }
+
+      state = state.copyWith(events: fetchedEvents, isLoading: false);
     } catch (e) {
-      debugPrint('[Supabase] Fetch events fallback to local: $e');
+      debugPrint('[Supabase] Fetch events error: $e');
+      state = state.copyWith(events: const [], isLoading: false, error: e.toString());
     }
   }
 
@@ -132,8 +135,9 @@ class EventNotifier extends StateNotifier<EventState> {
         for (var req in event.requirements) {
           await client.from('event_roles').insert(req.toSupabase(event.id));
         }
+        await fetchEventsFromSupabase();
       } catch (e) {
-        debugPrint('[Supabase] Event created with local persistence: $e');
+        debugPrint('[Supabase] Add event error: $e');
       }
     }
   }
@@ -180,8 +184,9 @@ class EventNotifier extends StateNotifier<EventState> {
         );
 
         debugPrint('[Supabase] Crew Approval Transaction Successful: $rpcRes');
+        await fetchEventsFromSupabase();
       } catch (e) {
-        debugPrint('Notice: Crew approved with local persistence (Supabase RPC message: $e)');
+        debugPrint('[Supabase] Crew approve transaction error: $e');
       }
     }
   }

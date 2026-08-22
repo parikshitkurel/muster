@@ -88,21 +88,43 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                mainAxisExtent: 260,
-              ),
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
-                final evt = filtered[index];
-                final alreadyApplied = myApps.any((a) => a.eventId == evt.id);
+            filtered.isEmpty
+                ? const Card(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(LucideIcons.calendarX, size: 48, color: AppColors.textMuted),
+                            SizedBox(height: 16),
+                            Text(
+                              'No Events Available',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                            ),
+                            SizedBox(height: 6),
+                            Text(
+                              'No production events found matching your filter in Supabase.',
+                              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      mainAxisExtent: 260,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final evt = filtered[index];
+                      final alreadyApplied = myApps.any((a) => a.eventId == evt.id);
 
                 return Card(
                   child: Padding(

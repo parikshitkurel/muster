@@ -3,29 +3,37 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_constants.dart';
 
 class AppTheme {
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
+    final baseTextTheme = GoogleFonts.interTextTheme(
+      ThemeData.light().textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.bgCanvas,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
         primary: AppColors.primary,
         onPrimary: Colors.white,
+        secondary: AppColors.musterOrange,
+        onSecondary: Colors.white,
+        tertiary: AppColors.forestGreen,
+        onTertiary: Colors.white,
         surface: AppColors.bgSurface,
         onSurface: AppColors.textMain,
         error: AppColors.danger,
         onError: Colors.white,
       ),
       fontFamily: GoogleFonts.inter().fontFamily,
-      textTheme: GoogleFonts.interTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(
+      textTheme: baseTextTheme.apply(
         bodyColor: AppColors.textMain,
         displayColor: AppColors.textMain,
       ),
       cardTheme: CardThemeData(
         color: AppColors.bgSurface,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
           side: const BorderSide(color: AppColors.border, width: 1),
@@ -78,4 +86,6 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme => lightTheme;
 }

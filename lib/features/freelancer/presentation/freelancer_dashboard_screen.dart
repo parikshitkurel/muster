@@ -22,7 +22,14 @@ class FreelancerDashboardScreen extends ConsumerWidget {
     final events = eventState.events;
     final applications = freelancerState.myApplications;
 
-    if (user == null) return const SizedBox.shrink();
+    if (user == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,

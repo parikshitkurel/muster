@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/notification.dart';
 import '../../core/supabase/supabase_config.dart';
-import '../mock/mock_data.dart';
 
 class NotificationState {
   final List<AppNotification> notifications;
   final bool isLoading;
+  final String? error;
 
   NotificationState({
-    required this.notifications,
+    this.notifications = const [],
     this.isLoading = false,
+    this.error,
   });
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
@@ -19,10 +20,12 @@ class NotificationState {
   NotificationState copyWith({
     List<AppNotification>? notifications,
     bool? isLoading,
+    String? error,
   }) {
     return NotificationState(
       notifications: notifications ?? this.notifications,
       isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
   }
 }
@@ -31,7 +34,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
   RealtimeChannel? _realtimeChannel;
 
   NotificationNotifier()
-      : super(NotificationState(notifications: MockData.initialNotifications)) {
+      : super(NotificationState(notifications: const [], isLoading: true)) {
     fetchNotificationsFromSupabase();
     _subscribeToNotifications();
   }
@@ -65,7 +68,10 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
 
   Future<void> fetchNotificationsFromSupabase() async {
     final client = SupabaseConfig.client;
-    if (client == null) return;
+    if (client == null) {
+      state = state.copyWith(notifications: const [], isLoading: false);
+      return;
+    }
 
     try {
       final notifsRes = await client
@@ -73,12 +79,13 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
           .select()
           .order('created_at', ascending: false);
 
-      if (notifsRes.isNotEmpty) {
-        final list = notifsRes.map((n) => AppNotification.fromSupabase(n)).toList();
-        state = state.copyWith(notifications: list);
-      }
+      final list = (notifsRes as List)
+          .map((n) => AppNotification.fromSupabase(n))
+          .toList();
+      state = state.copyWith(notifications: list, isLoading: false);
     } catch (e) {
-      debugPrint('[Supabase] Notifications fetch fallback: $e');
+      debugPrint('[Supabase] Notifications fetch error: $e');
+      state = state.copyWith(notifications: const [], isLoading: false, error: e.toString());
     }
   }
 

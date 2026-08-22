@@ -40,10 +40,36 @@ class _AICrewRecommendationScreenState
     final freelancerState = ref.watch(freelancerProvider);
     final matchingState = ref.watch(matchingProvider);
 
-    final evt = eventsState.events.firstWhere(
-      (e) => e.id == widget.eventId,
-      orElse: () => eventsState.events.first,
-    );
+    if (eventsState.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final evtMatches = eventsState.events.where((e) => e.id == widget.eventId);
+    if (evtMatches.isEmpty && eventsState.events.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.event_busy, size: 48, color: AppColors.textMuted),
+              const SizedBox(height: 16),
+              const Text('No Event Found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => context.go('/organizer/dashboard'),
+                child: const Text('Back to Dashboard'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final evt = evtMatches.isNotEmpty ? evtMatches.first : eventsState.events.first;
 
     final cachedList = matchingState.cachedRecommendations[evt.id];
     final result = (cachedList != null && cachedList.length > _currentPermutation)

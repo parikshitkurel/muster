@@ -15,11 +15,36 @@ class FinalCrewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final eventState = ref.watch(eventsProvider);
 
-    final evt = eventState.events.firstWhere(
-      (e) => e.id == eventId,
-      orElse: () => eventState.events.first,
-    );
+    if (eventState.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
+    final evtMatches = eventState.events.where((e) => e.id == eventId);
+    if (evtMatches.isEmpty && eventState.events.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.event_busy, size: 48, color: AppColors.textMuted),
+              const SizedBox(height: 16),
+              const Text('No Event Found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => context.go('/organizer/dashboard'),
+                child: const Text('Back to Dashboard'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final evt = evtMatches.isNotEmpty ? evtMatches.first : eventState.events.first;
     final crew = evt.confirmedCrew;
 
     return Scaffold(

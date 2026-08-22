@@ -119,95 +119,136 @@ class OrganizerDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: events.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final evt = events[index];
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.bgSurfaceSubtle,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.event_seat_outlined, size: 22, color: AppColors.primaryLight),
-                          ),
+            events.isEmpty
+                ? Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: AppColors.bgSurfaceSubtle,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: const Center(
+                                child: Icon(Icons.event_busy_outlined, size: 28, color: AppColors.textMuted),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No Events Created Yet',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Create your first event brief in Supabase or using the button below to start receiving applications.',
+                              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: () => context.go('/organizer/create-event'),
+                              icon: const Icon(Icons.add, size: 16),
+                              label: const Text('Create Event Now →'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: events.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final evt = events[index];
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.bgSurfaceSubtle,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.event_seat_outlined, size: 22, color: AppColors.primaryLight),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          evt.name,
+                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        _StatusBadge(status: evt.status),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${evt.date} • ${evt.venue} • ${evt.city}',
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Crew Quota: ${evt.totalCrewNeeded} positions across ${evt.requirements.length} roles',
+                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    evt.name,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                    CurrencyFormatter.format(evt.budget),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      fontFamily: 'monospace',
+                                      color: AppColors.primary,
+                                    ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  _StatusBadge(status: evt.status),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      OutlinedButton(
+                                        onPressed: () => context.go('/organizer/applicants/${evt.id}'),
+                                        child: Text('View Applicants (${evt.applicantCount})'),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton(
+                                        onPressed: () => context.go('/organizer/recommendation/${evt.id}'),
+                                        child: const Text('AI Optimizer →'),
+                                      ),
+                                    ],
+                                  ),
                                 ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${evt.date} • ${evt.venue} • ${evt.city}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Crew Quota: ${evt.totalCrewNeeded} positions across ${evt.requirements.length} roles',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                               ),
                             ],
                           ),
                         ),
-
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              CurrencyFormatter.format(evt.budget),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                fontFamily: 'monospace',
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                OutlinedButton(
-                                  onPressed: () => context.go('/organizer/applicants/${evt.id}'),
-                                  child: Text('View Applicants (${evt.applicantCount})'),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () => context.go('/organizer/recommendation/${evt.id}'),
-                                  child: const Text('AI Optimizer →'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ],
         ),
       ),

@@ -29,11 +29,36 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
     final eventsState = ref.watch(eventsProvider);
     final freelancerState = ref.watch(freelancerProvider);
 
-    final evt = eventsState.events.firstWhere(
-      (e) => e.id == widget.eventId,
-      orElse: () => eventsState.events.first,
-    );
+    if (eventsState.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
+    final evtMatches = eventsState.events.where((e) => e.id == widget.eventId);
+    if (evtMatches.isEmpty && eventsState.events.isEmpty) {
+      return Scaffold(
+        backgroundColor: AppColors.bgCanvas,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.event_busy, size: 48, color: AppColors.textMuted),
+              const SizedBox(height: 16),
+              const Text('No Event Found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => context.go('/organizer/dashboard'),
+                child: const Text('Back to Dashboard'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final evt = evtMatches.isNotEmpty ? evtMatches.first : eventsState.events.first;
     final candidates = freelancerState.allCandidates;
 
     // Filtering
@@ -226,17 +251,41 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
             const SizedBox(height: 16),
 
             // Candidate Cards Grid (PDF Page 4)
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                mainAxisExtent: 220,
-              ),
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
+            filtered.isEmpty
+                ? const Card(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.people_outline, size: 44, color: AppColors.textMuted),
+                            SizedBox(height: 12),
+                            Text(
+                              'No Applicants Yet',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                            ),
+                            SizedBox(height: 6),
+                            Text(
+                              'No freelancers have applied to this event yet or no candidates match your current filter.',
+                              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      mainAxisExtent: 220,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
                 final cand = filtered[index];
                 final isSelectedManual = _selectedManualIds.contains(cand.id);
 

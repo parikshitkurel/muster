@@ -205,7 +205,6 @@ class AppShell extends ConsumerWidget {
               borderRadius: BorderRadius.circular(6),
               onTap: () {
                 final targetRole = isOrganizer ? UserRole.freelancer : UserRole.organizer;
-                ref.read(authProvider.notifier).switchRole(targetRole);
                 if (targetRole == UserRole.organizer) {
                   context.go('/organizer/dashboard');
                 } else {

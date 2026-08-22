@@ -4,28 +4,31 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/freelancer.dart';
 import '../../models/application.dart';
 import '../../core/supabase/supabase_config.dart';
-import '../mock/mock_data.dart';
 
 class FreelancerState {
   final List<FreelancerCandidate> allCandidates;
   final List<FreelancerApplication> myApplications;
   final bool isLoading;
+  final String? error;
 
   FreelancerState({
-    required this.allCandidates,
-    required this.myApplications,
+    this.allCandidates = const [],
+    this.myApplications = const [],
     this.isLoading = false,
+    this.error,
   });
 
   FreelancerState copyWith({
     List<FreelancerCandidate>? allCandidates,
     List<FreelancerApplication>? myApplications,
     bool? isLoading,
+    String? error,
   }) {
     return FreelancerState(
       allCandidates: allCandidates ?? this.allCandidates,
       myApplications: myApplications ?? this.myApplications,
       isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
   }
 }
@@ -35,8 +38,9 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
 
   FreelancerNotifier()
       : super(FreelancerState(
-          allCandidates: MockData.allCandidates,
-          myApplications: MockData.initialApplications,
+          allCandidates: const [],
+          myApplications: const [],
+          isLoading: true,
         )) {
     fetchCandidatesFromSupabase();
     fetchApplicationsFromSupabase();
@@ -72,7 +76,10 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
 
   Future<void> fetchCandidatesFromSupabase() async {
     final client = SupabaseConfig.client;
-    if (client == null) return;
+    if (client == null) {
+      state = state.copyWith(allCandidates: const [], isLoading: false);
+      return;
+    }
 
     try {
       final candidatesRes = await client.from('freelancer_profiles').select('''
@@ -81,23 +88,25 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
         freelancer_skills (skill_name)
       ''');
 
-      if (candidatesRes.isNotEmpty) {
-        final List<FreelancerCandidate> list = [];
-        for (var cMap in candidatesRes) {
-          final skillsRes = cMap['freelancer_skills'] as List? ?? [];
-          final skills = skillsRes.map((s) => s['skill_name'] as String).toList();
-          list.add(FreelancerCandidate.fromSupabase(cMap, skillsList: skills));
-        }
-        state = state.copyWith(allCandidates: list);
+      final List<FreelancerCandidate> list = [];
+      for (var cMap in (candidatesRes as List)) {
+        final skillsRes = cMap['freelancer_skills'] as List? ?? [];
+        final skills = skillsRes.map((s) => s['skill_name'] as String).toList();
+        list.add(FreelancerCandidate.fromSupabase(cMap, skillsList: skills));
       }
+      state = state.copyWith(allCandidates: list, isLoading: false);
     } catch (e) {
-      debugPrint('[Supabase] Candidates fetch fallback: $e');
+      debugPrint('[Supabase] Candidates fetch error: $e');
+      state = state.copyWith(allCandidates: const [], isLoading: false, error: e.toString());
     }
   }
 
   Future<void> fetchApplicationsFromSupabase() async {
     final client = SupabaseConfig.client;
-    if (client == null) return;
+    if (client == null) {
+      state = state.copyWith(myApplications: const [], isLoading: false);
+      return;
+    }
 
     try {
       final appRes = await client.from('applications').select('''
@@ -105,12 +114,13 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
         events:event_id (name)
       ''');
 
-      if (appRes.isNotEmpty) {
-        final list = appRes.map((a) => FreelancerApplication.fromSupabase(a)).toList();
-        state = state.copyWith(myApplications: list);
-      }
+      final list = (appRes as List)
+          .map((a) => FreelancerApplication.fromSupabase(a))
+          .toList();
+      state = state.copyWith(myApplications: list, isLoading: false);
     } catch (e) {
-      debugPrint('[Supabase] Applications fetch fallback: $e');
+      debugPrint('[Supabase] Applications fetch error: $e');
+      state = state.copyWith(myApplications: const [], isLoading: false, error: e.toString());
     }
   }
 
@@ -160,8 +170,9 @@ class FreelancerNotifier extends StateNotifier<FreelancerState> {
         'feedback': app.feedback,
       });
       debugPrint('[Supabase] Application persisted for ${app.eventName}');
+      await fetchApplicationsFromSupabase();
     } catch (e) {
-      debugPrint('Notice: Application saved locally (Supabase insert message: $e)');
+      debugPrint('[Supabase] Application persist error: $e');
     }
   }
 }

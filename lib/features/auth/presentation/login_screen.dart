@@ -35,12 +35,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _selectedRole,
           );
 
-      if (success && mounted) {
+      if (!mounted) return;
+
+      if (success) {
         if (_selectedRole == UserRole.organizer) {
           context.go('/organizer/dashboard');
         } else {
           context.go('/freelancer/dashboard');
         }
+      } else {
+        final err = ref.read(authProvider).error ?? 'Sign in failed. Please check credentials.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(err),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }
