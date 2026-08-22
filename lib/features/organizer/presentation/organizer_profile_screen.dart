@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class OrganizerProfileScreen extends ConsumerStatefulWidget {
@@ -21,11 +22,11 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
   void initState() {
     super.initState();
     final user = ref.read(authProvider).currentUser;
-    _nameCtrl = TextEditingController(text: user?.fullName ?? 'Vikramaditya Roy');
-    _companyCtrl = TextEditingController(text: user?.companyName ?? 'Apex Event Production Pvt Ltd');
-    _cityCtrl = TextEditingController(text: user?.organizerCity ?? 'Bengaluru');
-    _phoneCtrl = TextEditingController(text: user?.phone ?? '+91 98765 43210');
-    _emailCtrl = TextEditingController(text: user?.email ?? 'organizer@muster.events');
+    _nameCtrl = TextEditingController(text: user?.fullName ?? '');
+    _companyCtrl = TextEditingController(text: user?.companyName ?? '');
+    _cityCtrl = TextEditingController(text: user?.organizerCity ?? '');
+    _phoneCtrl = TextEditingController(text: user?.phone ?? '');
+    _emailCtrl = TextEditingController(text: user?.email ?? '');
   }
 
   @override
@@ -79,12 +80,14 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
                             ),
                           ),
                           const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(_companyCtrl.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                              Text('${_cityCtrl.text} Operations • Verified Organizer', style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-                            ],
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_companyCtrl.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis),
+                                Text('${_cityCtrl.text} Operations • Verified Organizer', style: const TextStyle(fontSize: 13, color: AppColors.textMuted), overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -102,22 +105,41 @@ class _OrganizerProfileScreenState extends ConsumerState<OrganizerProfileScreen>
                       ),
                       const SizedBox(height: 14),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _cityCtrl,
-                              decoration: const InputDecoration(labelText: 'Operating City *'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _phoneCtrl,
-                              decoration: const InputDecoration(labelText: 'Contact Phone *'),
-                            ),
-                          ),
-                        ],
+                      Builder(
+                        builder: (context) {
+                          if (ResponsiveLayout.isMobile(context)) {
+                            return Column(
+                              children: [
+                                TextFormField(
+                                  controller: _cityCtrl,
+                                  decoration: const InputDecoration(labelText: 'Operating City *'),
+                                ),
+                                const SizedBox(height: 14),
+                                TextFormField(
+                                  controller: _phoneCtrl,
+                                  decoration: const InputDecoration(labelText: 'Contact Phone *'),
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _cityCtrl,
+                                  decoration: const InputDecoration(labelText: 'Operating City *'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _phoneCtrl,
+                                  decoration: const InputDecoration(labelText: 'Contact Phone *'),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
 

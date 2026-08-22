@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class FreelancerProfileScreen extends ConsumerStatefulWidget {
@@ -23,12 +24,12 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
   void initState() {
     super.initState();
     final user = ref.read(authProvider).currentUser;
-    _nameCtrl = TextEditingController(text: user?.fullName ?? 'Rohan Mehta');
-    _roleCtrl = TextEditingController(text: user?.primaryRole ?? 'Sound Engineer');
-    _rateCtrl = TextEditingController(text: '${user?.expectedRate ?? 1800}');
-    _cityCtrl = TextEditingController(text: user?.freelancerCity ?? 'Bengaluru');
-    _phoneCtrl = TextEditingController(text: user?.phone ?? '+91 98765 43210');
-    _emailCtrl = TextEditingController(text: user?.email ?? 'rohan.mehta@muster.events');
+    _nameCtrl = TextEditingController(text: user?.fullName ?? '');
+    _roleCtrl = TextEditingController(text: user?.primaryRole ?? '');
+    _rateCtrl = TextEditingController(text: '${user?.expectedRate ?? 0}');
+    _cityCtrl = TextEditingController(text: user?.freelancerCity ?? '');
+    _phoneCtrl = TextEditingController(text: user?.phone ?? '');
+    _emailCtrl = TextEditingController(text: user?.email ?? '');
   }
 
   @override
@@ -85,36 +86,30 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                             ),
                           ),
                           const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(_nameCtrl.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                              Text('${_roleCtrl.text} • Verified Talent', style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.successBg,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(LucideIcons.shieldCheck, size: 11, color: AppColors.success),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '96% RELIABILITY RATING',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.success,
-                                        fontFamily: 'monospace',
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_nameCtrl.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis),
+                                Text('${_roleCtrl.text} • Verified Talent', style: const TextStyle(fontSize: 13, color: AppColors.textMuted), overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(4)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.shieldCheck, size: 11, color: AppColors.success),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${user?.reliabilityScore ?? 0}% RELIABILITY RATING',
+                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.success, fontFamily: 'monospace'),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -126,45 +121,42 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                       ),
                       const SizedBox(height: 14),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _roleCtrl,
-                              decoration: const InputDecoration(labelText: 'Primary Specialization *'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _rateCtrl,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Hourly Shift Rate (₹) *',
-                                prefixText: '₹ ',
+                      Builder(
+                        builder: (context) {
+                          final mobile = ResponsiveLayout.isMobile(context);
+                          if (mobile) {
+                            return Column(
+                              children: [
+                                TextFormField(controller: _roleCtrl, decoration: const InputDecoration(labelText: 'Primary Specialization *')),
+                                const SizedBox(height: 14),
+                                TextFormField(controller: _rateCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Hourly Shift Rate (₹) *', prefixText: '₹ ')),
+                                const SizedBox(height: 14),
+                                TextFormField(controller: _cityCtrl, decoration: const InputDecoration(labelText: 'Base Operating City *')),
+                                const SizedBox(height: 14),
+                                TextFormField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'Phone Number *')),
+                              ],
+                            );
+                          }
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(child: TextFormField(controller: _roleCtrl, decoration: const InputDecoration(labelText: 'Primary Specialization *'))),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: TextFormField(controller: _rateCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Hourly Shift Rate (₹) *', prefixText: '₹ '))),
+                                ],
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _cityCtrl,
-                              decoration: const InputDecoration(labelText: 'Base Operating City *'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _phoneCtrl,
-                              decoration: const InputDecoration(labelText: 'Phone Number *'),
-                            ),
-                          ),
-                        ],
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(child: TextFormField(controller: _cityCtrl, decoration: const InputDecoration(labelText: 'Base Operating City *'))),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: TextFormField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'Phone Number *'))),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
 
@@ -183,8 +175,8 @@ class _FreelancerProfileScreenState extends ConsumerState<FreelancerProfileScree
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: (user?.skills ?? ['Digital Audio', 'Rigging'])
-                            .map(
+                      children: (user?.skills ?? const [])
+                          .map(
                               (s) => Chip(
                                 label: Text(s, style: const TextStyle(fontSize: 11)),
                                 backgroundColor: AppColors.bgSurfaceSubtle,

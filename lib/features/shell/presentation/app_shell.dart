@@ -28,22 +28,28 @@ class AppShell extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
-      body: Row(
-        children: [
-          if (isDesktop) _buildSidebar(context, ref, user, isOrganizer, notifState.unreadCount),
-          Expanded(
-            child: Column(
-              children: [
-                _buildTopBar(context, ref, user, isOrganizer, notifState.unreadCount),
-                Expanded(child: child),
-              ],
+      body: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            if (isDesktop) _buildSidebar(context, ref, user, isOrganizer, notifState.unreadCount),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildTopBar(context, ref, user, isOrganizer, notifState.unreadCount),
+                  Expanded(child: child),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: isDesktop
           ? null
-          : _buildMobileNavBar(context, isOrganizer, notifState.unreadCount),
+          : SafeArea(
+              top: false,
+              child: _buildMobileNavBar(context, isOrganizer, notifState.unreadCount),
+            ),
     );
   }
 
@@ -334,11 +340,13 @@ class AppShell extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      user.fullName,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
+                    if (ResponsiveLayout.isDesktop(context)) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        user.fullName,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                     const Icon(Icons.arrow_drop_down, size: 18, color: AppColors.textMuted),
                   ],
                 ),
@@ -414,7 +422,28 @@ class AppShell extends ConsumerWidget {
         items: items
             .map(
               (it) => BottomNavigationBarItem(
-                icon: Icon(it.icon, size: 20),
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(it.icon, size: 20),
+                    if (it.badgeCount != null && it.badgeCount! > 0)
+                      Positioned(
+                        right: -6,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${it.badgeCount}',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 label: it.title,
               ),
             )

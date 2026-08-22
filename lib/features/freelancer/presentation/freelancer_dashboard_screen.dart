@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../models/application.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/event_repository.dart';
@@ -34,63 +35,74 @@ class FreelancerDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(ResponsiveLayout.isMobile(context) ? 16 : 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header (PDF Page 6)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Page Header — responsive
+            if (ResponsiveLayout.isMobile(context)) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(4)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.successBg,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(LucideIcons.shieldCheck, size: 12, color: AppColors.success),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${user.reliabilityScore}% RELIABILITY RATING',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.success,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Welcome back, ${user.fullName}',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Specialization: ${user.primaryRole} • Verified Rate: ₹${user.expectedRate}/hr',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-                    ),
+                    const Icon(LucideIcons.shieldCheck, size: 12, color: AppColors.success),
+                    const SizedBox(width: 4),
+                    Text('${user.reliabilityScore}% RELIABILITY', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.success, fontFamily: 'monospace')),
                   ],
                 ),
-
-                ElevatedButton.icon(
+              ),
+              const SizedBox(height: 6),
+              Text('Welcome back, ${user.fullName}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 4),
+              Text('${user.primaryRole} • ₹${user.expectedRate}/hr', style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
                   onPressed: () => context.go('/freelancer/browse-events'),
                   icon: const Icon(LucideIcons.compass, size: 18),
-                  label: const Text('Browse Available Events →'),
+                  label: const Text('Browse Events →'),
                 ),
-              ],
-            ),
+              ),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(4)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(LucideIcons.shieldCheck, size: 12, color: AppColors.success),
+                              const SizedBox(width: 4),
+                              Text('${user.reliabilityScore}% RELIABILITY RATING', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.success, fontFamily: 'monospace')),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text('Welcome back, ${user.fullName}', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 4),
+                        Text('Specialization: ${user.primaryRole} • Verified Rate: ₹${user.expectedRate}/hr', style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+                    onPressed: () => context.go('/freelancer/browse-events'),
+                    icon: const Icon(LucideIcons.compass, size: 18),
+                    label: const Text('Browse Available Events →'),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Available Events Section (PDF Page 6)
@@ -175,18 +187,27 @@ class FreelancerDashboardScreen extends ConsumerWidget {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                          'Budget: ${CurrencyFormatter.format(evt.budget)}',
-                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'monospace', color: AppColors.primary),
+                                        Flexible(
+                                          child: Text(
+                                            'Budget: ${CurrencyFormatter.format(evt.budget)}',
+                                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'monospace', color: AppColors.primary),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        Row(
-                                          children: [
-                                            OutlinedButton(
-                                              onPressed: () => context.go('/freelancer/event/${evt.id}'),
-                                              child: const Text('Details'),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            ElevatedButton(
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => context.go('/freelancer/event/${evt.id}'),
+                                            child: const Text('Details', overflow: TextOverflow.ellipsis),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: alreadyApplied ? AppColors.bgContainer : AppColors.success,
                                                 foregroundColor: alreadyApplied ? AppColors.textMuted : Colors.white,
@@ -222,10 +243,9 @@ class FreelancerDashboardScreen extends ConsumerWidget {
                                                 ],
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                          ),
+                                        ],
+                                      ),
                                   ],
                                 ),
                               );
