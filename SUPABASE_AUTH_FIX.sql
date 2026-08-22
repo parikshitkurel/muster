@@ -4,7 +4,7 @@
 -- Run this in your Supabase Dashboard -> SQL Editor
 -- This fixes the "Database error querying schema" (HTTP 500) error by:
 -- 1. Ensuring all required extensions and grants exist
--- 2. Populating auth.identities for GoTrue password authentication
+-- 2. Populating auth.identities with proper UUID id for GoTrue password auth
 -- 3. Synchronizing profiles, organizer_profiles, and freelancer_profiles
 -- ==============================================================================
 
@@ -17,7 +17,7 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, servi
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role, supabase_auth_admin;
 GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role, supabase_auth_admin;
 
--- 2. CREATE / REFRESH TEST USERS IN AUTH.USERS
+-- 2. CREATE / REFRESH TEST USERS IN AUTH.USERS & AUTH.IDENTITIES
 -- Password for all accounts: MusterTest@2026
 
 DO $$
@@ -151,7 +151,7 @@ BEGIN
             raw_user_meta_data = jsonb_build_object('role', u.role, 'full_name', u.full_name, 'city', u.city),
             updated_at = NOW();
 
-        -- 2.2 Insert / Update auth.identities (CRITICAL for Supabase GoTrue Auth)
+        -- 2.2 Insert / Update auth.identities (Using UUID for id column)
         INSERT INTO auth.identities (
             id,
             user_id,
@@ -162,7 +162,7 @@ BEGIN
             created_at,
             updated_at
         ) VALUES (
-            u.id::text,
+            u.id,
             u.id,
             jsonb_build_object('sub', u.id::text, 'email', u.email),
             'email',
