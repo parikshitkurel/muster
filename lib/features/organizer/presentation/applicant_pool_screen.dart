@@ -234,7 +234,7 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton.icon(
-                      onPressed: () => _triggerAiMatchingDialog(context, evt),
+                      onPressed: () => _triggerAiMatchingDialog(context, evt, candidates),
                       icon: const Icon(LucideIcons.sparkles, size: 16),
                       label: const Text('Run AI Matching'),
                     ),
@@ -531,8 +531,11 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
     );
   }
 
-  void _triggerAiMatchingDialog(BuildContext context, dynamic evt) {
-    final candidates = ref.read(freelancerProvider).allCandidates;
+  void _triggerAiMatchingDialog(BuildContext context, dynamic evt, List<FreelancerCandidate> poolCandidates) {
+    final candidates = poolCandidates.isNotEmpty
+        ? poolCandidates
+        : ref.read(freelancerProvider).allCandidates;
+
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
