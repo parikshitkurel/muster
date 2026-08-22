@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/repositories/event_repository.dart';
@@ -105,19 +104,6 @@ class FinalCrewScreen extends ConsumerWidget {
                         style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
                       ),
                     ],
-                  ),
-
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Live Shift Operations & Check-in QR Scanner Active.'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    },
-                    icon: const Icon(LucideIcons.qrCode, size: 16),
-                    label: const Text('Manage Event Operations →'),
                   ),
                 ],
               ),

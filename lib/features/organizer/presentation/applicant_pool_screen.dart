@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../../models/crew.dart';
+import '../../../models/freelancer.dart';
 import '../../../data/repositories/event_repository.dart';
 import '../../../data/repositories/freelancer_repository.dart';
 
@@ -24,12 +26,49 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
   bool _isManualMode = false;
   final Set<String> _selectedManualIds = {};
 
+  Set<String>? _eventApplicantIds;
+  bool _isLoadingApps = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchEventApplicants();
+  }
+
+  Future<void> _fetchEventApplicants() async {
+    final client = SupabaseConfig.client;
+    if (client == null) {
+      if (mounted) setState(() => _isLoadingApps = false);
+      return;
+    }
+    try {
+      final res = await client
+          .from('applications')
+          .select('freelancer_id')
+          .eq('event_id', widget.eventId);
+
+      final ids = (res as List)
+          .map((r) => r['freelancer_id'] as String)
+          .toSet();
+
+      if (mounted) {
+        setState(() {
+          _eventApplicantIds = ids;
+          _isLoadingApps = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Supabase] Load event applicants error: $e');
+      if (mounted) setState(() => _isLoadingApps = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final eventsState = ref.watch(eventsProvider);
     final freelancerState = ref.watch(freelancerProvider);
 
-    if (eventsState.isLoading) {
+    if (eventsState.isLoading || _isLoadingApps) {
       return const Scaffold(
         backgroundColor: AppColors.bgCanvas,
         body: Center(child: CircularProgressIndicator()),
@@ -59,7 +98,10 @@ class _ApplicantPoolScreenState extends ConsumerState<ApplicantPoolScreen> {
     }
 
     final evt = evtMatches.isNotEmpty ? evtMatches.first : eventsState.events.first;
-    final candidates = freelancerState.allCandidates;
+    final allCandidates = freelancerState.allCandidates;
+    final candidates = _eventApplicantIds != null
+        ? allCandidates.where((c) => _eventApplicantIds!.contains(c.id)).toList()
+        : <FreelancerCandidate>[];
 
     // Filtering
     var filtered = candidates.where((cand) {

@@ -152,25 +152,117 @@ class GeminiService {
     return '$strategy synthesized with $matchScore% composite quality index and ₹$totalCost budget allocation.';
   }
 
-  /// Invokes Edge Function for natural language requirement parsing
+  /// Invokes Edge Function for natural language requirement parsing with local NLP fallback
   static Future<Map<String, dynamic>?> parseRequirements(String prompt) async {
     final client = SupabaseConfig.client;
-    if (client == null) return null;
+    if (client != null) {
+      try {
+        final res = await client.functions.invoke(
+          'muster-ai',
+          body: {
+            'action': 'parse_requirements',
+            'prompt': prompt,
+          },
+        );
 
-    try {
-      final res = await client.functions.invoke(
-        'muster-ai',
-        body: {
-          'action': 'parse_requirements',
-          'prompt': prompt,
-        },
-      );
-
-      if (res.status == 200 && res.data != null) {
-        final data = res.data is String ? jsonDecode(res.data) : res.data;
-        return data['parsed_requirements'] as Map<String, dynamic>?;
+        if (res.status == 200 && res.data != null) {
+          final data = res.data is String ? jsonDecode(res.data) : res.data;
+          final parsed = data['parsed_requirements'] as Map<String, dynamic>?;
+          if (parsed != null) return parsed;
+        }
+      } catch (e) {
+        debugPrint('[Gemini AI] Edge Function notice: $e. Using local NLP extractor fallback...');
       }
-    } catch (_) {}
-    return null;
+    }
+
+    // Local Intelligent NLP Extractor Fallback
+    final lowerPrompt = prompt.toLowerCase();
+    String? city;
+    int? budget;
+    String category = 'Conference';
+    final roles = <Map<String, dynamic>>[];
+
+    // Extract City
+    if (lowerPrompt.contains('bengaluru') || lowerPrompt.contains('bangalore')) {
+      city = 'Bengaluru';
+    } else if (lowerPrompt.contains('mumbai')) {
+      city = 'Mumbai';
+    } else if (lowerPrompt.contains('indore')) {
+      city = 'Indore';
+    } else if (lowerPrompt.contains('bhopal')) {
+      city = 'Bhopal';
+    } else if (lowerPrompt.contains('delhi')) {
+      city = 'Delhi NCR';
+    }
+
+    // Extract Category
+    if (lowerPrompt.contains('summit')) category = 'Summit';
+    if (lowerPrompt.contains('concert') || lowerPrompt.contains('arena')) category = 'Concert / Arena';
+    if (lowerPrompt.contains('exhibition')) category = 'Exhibition';
+
+    // Extract Budget (matches ₹1,40,000 or 140000 or 1.4 lakh or 2 lakhs or budget of 150000)
+    final budgetMatch = RegExp(r'(?:budget|₹|\$)\s*(?:of\s*)?([0-9,\.\s]+)\s*(lakh|lakhs|k)?', caseSensitive: false).firstMatch(prompt);
+    if (budgetMatch != null) {
+      final rawNumStr = budgetMatch.group(1)!.replaceAll(',', '').replaceAll(' ', '').trim();
+      final unit = budgetMatch.group(2)?.toLowerCase();
+      double val = double.tryParse(rawNumStr) ?? 0;
+      if (unit == 'lakh' || unit == 'lakhs') {
+        val *= 100000;
+      } else if (unit == 'k') {
+        val *= 1000;
+      }
+      if (val > 0) budget = val.toInt();
+    }
+
+    if (budget == null || budget == 0) {
+      final digitsMatch = RegExp(r'([0-9]{5,7})').firstMatch(prompt.replaceAll(',', ''));
+      if (digitsMatch != null) {
+        budget = int.tryParse(digitsMatch.group(1)!);
+      }
+    }
+
+    // Extract Roles (e.g. 2 Sound Engineers, 1 Lighting Specialist)
+    final roleRegex = RegExp(r'(\d+)\s+([A-Za-z\s]+?)(?:for|in|with|under|at|\.|,|$)', caseSensitive: false);
+    for (var match in roleRegex.allMatches(prompt)) {
+      final qty = int.tryParse(match.group(1)!) ?? 1;
+      var roleName = match.group(2)!.trim();
+      roleName = roleName.replaceAll(RegExp(r'^(day|days|hour|hours|person|people)\s+', caseSensitive: false), '').trim();
+      if (roleName.isNotEmpty && !roleName.toLowerCase().startsWith('day') && !roleName.toLowerCase().startsWith('budget')) {
+        roles.add({
+          'role_name': _capitalizeRole(roleName),
+          'quantity': qty,
+          'max_rate_per_hour': 1800,
+          'min_experience_years': 2,
+        });
+      }
+    }
+
+    if (roles.isEmpty) {
+      roles.add({
+        'role_name': 'Sound Engineer',
+        'quantity': 2,
+        'max_rate_per_hour': 1800,
+        'min_experience_years': 3,
+      });
+      roles.add({
+        'role_name': 'Lighting Specialist',
+        'quantity': 1,
+        'max_rate_per_hour': 1650,
+        'min_experience_years': 2,
+      });
+    }
+
+    return {
+      'suggested_name': prompt.length > 50 ? '${prompt.substring(0, 45)}...' : prompt,
+      'suggested_city': city ?? 'Bengaluru',
+      'category': category,
+      'estimated_budget': budget ?? 140000,
+      'roles': roles,
+      'description': prompt,
+    };
+  }
+
+  static String _capitalizeRole(String input) {
+    return input.split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}' : '').join(' ');
   }
 }

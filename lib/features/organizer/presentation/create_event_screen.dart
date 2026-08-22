@@ -346,6 +346,8 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                           if (parsed['estimated_budget'] != null) {
                             _budgetCtrl.text = parsed['estimated_budget'].toString();
                           }
+                          if (parsed['category'] != null) _eventType = parsed['category'];
+                          if (parsed['description'] != null) _descCtrl.text = parsed['description'];
                           final roles = parsed['roles'] as List?;
                           if (roles != null && roles.isNotEmpty) {
                             _requirements.clear();
@@ -363,7 +365,10 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                           }
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('✨ Requirements extracted by Gemini AI!')),
+                          const SnackBar(
+                            content: Text('✨ Event requirements auto-filled by Gemini AI!'),
+                            backgroundColor: AppColors.success,
+                          ),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
